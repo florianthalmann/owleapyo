@@ -45,8 +45,9 @@ class LeapListener(Leap.Listener):
         frame = controller.frame()
         position = frame.hands.rightmost.palm_position
         if position.x != 0:
-            self.player.waitTime = (position.y) / 300
-            self.player.durationRatio = (position.x +300) / 200
+            self.player.waitTime = (position.y) / 1000
+            self.player.durationRatio = (position.x +300) / 500
+            self.player.frequencyRatio = (-position.z +300) / 300
 
 class Audio():
     
@@ -59,9 +60,9 @@ class Audio():
 
 class SoundObject():
     
-    def __init__(self, filename, start, end, durationRatio):
+    def __init__(self, filename, start, end, durationRatio, frequencyRatio):
         duration = durationRatio*(end-start)
-        frequency = 1/duration
+        frequency = frequencyRatio*(1/duration)
         stop = start+duration
         snd = SndTable("king.wav", start=start, stop=stop)
         self.out = TableRead(table=snd, freq=frequency).out()
@@ -75,16 +76,17 @@ class Player(Thread):
         self.durations = RdfReader().loadDurations("king.n3", "n3")
         self.waitTime = .3
         self.durationRatio = 1;
+        self.frequencyRatio = 1;
     
     def playNewObject(self):
         randomIndex = randint(0,len(self.durations)-2)
         start = self.durations[randomIndex]
         end = self.durations[randomIndex+1]
-        self.a = SoundObject("king.wav", start, end, self.durationRatio).out
+        self.a = SoundObject("king.wav", start, end, self.durationRatio, self.frequencyRatio).out
     
     def run(self):
         while (not self._stop.is_set()):
-            print self.waitTime, self.durationRatio
+            print self.waitTime, self.durationRatio, self.frequencyRatio
             self.playNewObject()
             self._stop.wait(self.waitTime)
             pass
