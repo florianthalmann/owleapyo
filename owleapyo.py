@@ -12,6 +12,8 @@ from Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
 from pyo import *
 import rdflib
 from rdflib import XSD
+import OSC
+import mido
 
 class RdfReader():
     
@@ -49,6 +51,25 @@ class LeapListener(Leap.Listener):
             self.player.durationRatio = (position.x +300) / 500
             self.player.frequencyRatio = (-position.z +300) / 300
 
+class OscListener():
+    
+    def __init__(self, player):
+        self.player = player
+        address = '192.168.0.7', 57120
+        self.server = OSC.OSCServer(address)
+        self.server.addMsgHandler("/sphere0/position", self.handleMessage)
+        self.thread = threading.Thread( target = self.server.serve_forever )
+        self.thread.start()
+    
+    def handleMessage(self, addr, tags, stuff, source):
+        #print addr, tags, stuff, source
+        if addr == "/sphere0/position":
+            self.player.waitTime = stuff[0]
+    
+    def stop(self):
+        self.server.close()
+        self.thread.join()
+
 class Audio():
     
     def __init__(self):
@@ -62,37 +83,82 @@ class SoundObject():
     
     def __init__(self, filename, start, end, durationRatio, frequencyRatio):
         duration = durationRatio*(end-start)
-        frequency = frequencyRatio*(1/duration)
+        self.frequency = frequencyRatio*(1/duration)
         stop = start+duration
-        snd = SndTable("king.wav", start=start, stop=stop)
-        self.out = TableRead(table=snd, freq=frequency).out()
+        self.snd = SndTable("king.wav", start=start, stop=stop)
+        self.pan = random.uniform(0,1)
+        self.reverb = random.uniform(0,1)
+        
+    def play(self):
+        table = TableRead(table=self.snd, freq=self.frequency).out()
+        table = Freeverb(table, size=self.reverb, bal=self.reverb).out()
+        self.out = Pan(table, outs=2, pan=self.pan).out()
 
-class Player(Thread):
+class Loop():
     
-    def __init__(self):
-        super(Player, self).__init__()
-        self._stop = threading.Event()
-        self.audio = Audio()
-        self.durations = RdfReader().loadDurations("king.n3", "n3")
-        self.waitTime = .3
-        self.durationRatio = 1;
-        self.frequencyRatio = 1;
+    def __init__(self, objects, duration, division, onsets):
+        self.objects = objects
+        beatDuration = float(duration)/division
+        onsets = self.getOnsets(onsets, division)
+        self.seq = Seq(time=beatDuration, seq=onsets, poly=1)
+        print onsets
+        self.index = 0
     
-    def playNewObject(self):
-        randomIndex = randint(0,len(self.durations)-2)
-        start = self.durations[randomIndex]
-        end = self.durations[randomIndex+1]
-        self.a = SoundObject("king.wav", start, end, self.durationRatio, self.frequencyRatio).out
+    def getOnsets(self, onsetCount, total):
+        dividers = sorted(random.sample(xrange(1, total), onsetCount - 1))
+        return [a - b for a, b in zip(dividers + [total], [0] + dividers)]
     
-    def run(self):
-        while (not self._stop.is_set()):
-            print self.waitTime, self.durationRatio, self.frequencyRatio
-            self.playNewObject()
-            self._stop.wait(self.waitTime)
-            pass
+    def getObjectCount(self):
+        return len(self.objects)
+    
+    def setObjects(self, objects):
+        self.oldObjects = self.objects #temp save last objects to not stop them immediately
+        self.objects = objects
+    
+    def playNextObject(self):
+        self.objects[self.index].play()
+        self.index = (self.index+1) % len(self.objects)
+    
+    def play(self):
+        self.seq.play() #seq=[2,1,3,1,1,1,2,1], poly=1).play()
+        self.trig = TrigFunc(self.seq, self.playNextObject)
     
     def stop(self):
-        self._stop.set()
+        self.seq.stop()
+
+class Player():
+    
+    def __init__(self):
+        self.audio = Audio()
+        self.durations = RdfReader().loadDurations("king.n3", "n3")
+        self.durationRatio = 1
+        self.frequencyRatio = 1
+        self.loops = []
+    
+    def createNewObjects(self, objectsInSequence):
+        objects = []
+        for x in range(0, objectsInSequence):
+            randomIndex = randint(0,len(self.durations)-2)
+            start = self.durations[randomIndex]
+            end = self.durations[randomIndex+1]
+            objects.append(SoundObject("king.n3", start, end, self.durationRatio, self.frequencyRatio))
+        return objects
+    
+    def replaceObjectsInLoop(self):
+        for loop in self.loops:
+            loop.setObjects(self.createNewObjects(loop.getObjectCount()))
+    
+    def start(self):
+        self.loops.append(Loop(self.createNewObjects(1), 3, 16, 4))
+        self.loops.append(Loop(self.createNewObjects(2), 3, 16, 9))
+        self.loops.append(Loop(self.createNewObjects(1), 3, 16, 2))
+        self.loops.append(Loop(self.createNewObjects(5), 3, 16, 5))
+        for loop in self.loops:
+            loop.play()
+    
+    def stop(self):
+        for loop in self.loops:
+            loop.stop()
         self.audio.stop()
 
 def main():
@@ -100,21 +166,29 @@ def main():
     player = Player()
     
     # Create a listener and controller
-    listener = LeapListener(player)
-    controller = Leap.Controller()
+    #listener = LeapListener(player)
+    #controller = Leap.Controller()
 
     # Have the sample listener receive events from the controller
-    controller.add_listener(listener)
+    #controller.add_listener(listener)
+    
+    #oscListener = OscListener(player)
     
     player.start()
     
-    # Keep this process running until Enter is pressed
-    print "Press Enter to quit..."
-    try:
-        sys.stdin.readline()
-        player.stop()
-    except KeyboardInterrupt:
-        pass
+    inport = mido.open_input()
+    
+    while True:
+        msg = inport.receive()
+        if msg.type == 'note_on':
+            print msg
+            player.replaceObjectsInLoop()
+    
+    """while True:
+        x = raw_input('Press Enter for new sounds...')
+        if x == 'done':
+            break
+        player.replaceObjectsInLoop()"""
 
 if __name__ == "__main__":
     main()
