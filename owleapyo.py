@@ -13,8 +13,8 @@ from pyo import *
 import rdflib
 from rdflib import XSD
 import OSC
-import mido
-#import rtmidi
+
+from pushmidi import PushMidi
 
 class RdfReader():
     
@@ -81,33 +81,6 @@ class OscListener():
         self.server.close()
         self.thread.join()
 
-class MidiListener():
-    
-    def __init__(self, player):
-        mido.set_backend('mido.backends.rtmidi')
-        self.player = player
-        self.thread = Thread( target = self.listenToMidi )
-        self.thread.start()
-    
-    def listenToMidi(self):
-        self.isRunning = True
-        try:
-            self.inport = mido.open_input()
-            while self.isRunning:
-                msg = self.inport.receive()
-                print msg
-                if msg.type == 'note_on':
-                    self.player.switchToPattern(msg.note)
-                    print len(self.player.patterns[msg.note].loops), len(self.player.audio.server.getStreams())
-                if msg.type == 'control_change':
-                    self.player.getCurrentPattern().setImprecision(msg.value)
-        except IOError as e:
-            print e
-    
-    def stop(self):
-        self.isRunning = False
-        self.thread.join()
-
 class Audio():
     
     def __init__(self):
@@ -121,25 +94,29 @@ class Audio():
 
 class SoundObject():
     
-    def __init__(self, filename, amplitude=1, start=None, end=None, durationRatio=1, disto=random.uniform(0,1), reverb=random.uniform(0.3,1), pan=random.uniform(0,1)):
-        if (start == None):
+    def __init__(self, filename, amplitude=1, start=None, end=None, durationRatio=1, disto=None, reverb=None, pan=None):
+        if start is None:
             self.snd = SndTable(filename)
         else:
             duration = durationRatio*(end-start)
             print duration
             self.snd = SndTable(filename, start=start, stop=start+duration)
+        if pan is None:
+            pan = random.uniform(0,1)
+        if reverb is None:
+            reverb = random.uniform(0.3,1)
+        if disto is None:
+            disto = random.uniform(0,1)
         self.pan = pan
-        self.disto = disto
+        self.disto = 0
         self.reverb = reverb
         self.amplitude = amplitude
     
     def play(self):
         signal = self.getSignal() #IMPLEMENT IN INHERITING CLASSES
         signal = Pan(signal, outs=2, pan=self.pan).out()
-        signal = Disto(signal, drive=self.disto, slope=.8, mul=.15).out()
-        signal = Freeverb(signal, size=self.reverb, bal=self.reverb).out()
-        #print self.pan
-        self.out = signal
+        return Disto(signal, drive=self.disto, slope=.8, mul=.15).out()
+        #self.out = signal
     
     def stopAndClean(self):
         Thread( target = self.stopOut ).start()
@@ -152,23 +129,29 @@ class SoundObject():
 
 class GranularSoundObject(SoundObject):
     
-    def __init__(self, filename, amplitude=1, start=None, end=None, durationRatio=1, disto=random.uniform(0,1), reverb=random.uniform(0.3,1), pan=random.uniform(0,1)):
+    def __init__(self, filename, amplitude=1, start=None, end=None, durationRatio=1, disto=None, reverb=None, pan=None):
         SoundObject.__init__(self, filename, amplitude, start, end, durationRatio, 0, 0.2, pan)
+        self.position = 0
     
     def getSignal(self):
-        dur = Noise(.001, .1)
-        self.granulator = Granulator(self.snd, HannTable(), [1, 1.001], grains=24, mul=self.amplitude).out()
-        return self.granulator
+        self.granulator = Granulator(self.snd, HannTable(), [1, 1.001], grains=randint(10,20), dur=Noise(.001, .1), basedur=0.1, mul=self.amplitude)
+        return self.granulator.out()
     
-    def update(self, position, amplitude, duration, pitch):
+    def update(self, position, amplitude, duration=None, pitch=None):
+        self.position = position
         self.granulator.setPos(position*self.snd.getSize()[0])
         self.granulator.setMul(amplitude)
-        self.granulator.setDur(duration*0.3)
-        self.granulator.setPitch(pitch)
+        if duration != None:
+            self.granulator.setDur(duration*0.3)
+        if pitch != None:
+            self.granulator.setPitch(pitch)
+    
+    def getPosition(self):
+        return self.position
 
 class SampleSoundObject(SoundObject):
     
-    def __init__(self, filename, amplitude=1, frequencyRatio=1, start=None, end=None, durationRatio=1, disto=random.uniform(0,1), reverb=random.uniform(0.3,1), pan=random.uniform(0,1)):
+    def __init__(self, filename, amplitude=1, frequencyRatio=1, start=None, end=None, durationRatio=1, disto=None, reverb=None, pan=None):
         SoundObject.__init__(self, filename, amplitude, start, end, durationRatio, disto, reverb, pan)
         if self.snd.getDur() > 0:
             self.frequency = frequencyRatio*(1/self.snd.getDur())
@@ -287,11 +270,48 @@ class Player():
     
     def __init__(self):
         self.audio = Audio()
-        self.durations = RdfReader().loadDurations("miroglio/garden3.n3", "n3")
+        self.durations = RdfReader().loadDurations("miroglio/garden3_onset.n3", "n3")
         self.durationRatio = 1
         self.frequencyRatio = 1
         self.patterns = {}
         self.currentPattern = None
+        self.objects = {}
+        self.granularObjects = {}
+        self.mix = Mixer(outs=2, chnls=2, time=.025)
+        #self.out = self.mix[0]
+        self.reverbSend = Freeverb(self.mix[1], size=.8, damp=.2, bal=1, mul=1).out()
+        #self.reverbSend = Freeverb(signal, size=self.reverb, bal=self.reverb).out()
+    
+    def playSound(self, index, velocity):
+        amp = 0.99*velocity/127
+        start = self.durations[index]
+        end = self.durations[index+1]
+        newObject = SampleSoundObject("miroglio/garden3.wav", amp, self.frequencyRatio, start, end, reverb=1)
+        if index in self.objects:
+            self.objects[index].stopAndClean()
+            self.mix.delInput(index)
+            print self.audio.server.getNumberOfStreams()
+        self.mix.addInput(index, newObject.play())
+        self.mix.setAmp(index, 1, newObject.reverb*10)
+        self.objects[index] = newObject
+    
+    def playOrModifyGranularObject(self, index, amp):
+        amp = 0.99*amp/127
+        if index not in self.granularObjects:
+            start = self.durations[index]
+            end = self.durations[index+1]
+            self.granularObjects[index] = GranularSoundObject("miroglio/garden3.wav", amp, start, end)
+            self.granularObjects[index].play()
+            self.mix.addInput(index, self.granularObjects[index].play())
+            self.mix.setAmp(index, 0, 0)
+            self.mix.setAmp(index, 1, self.granularObjects[index].reverb*10)
+        else:
+            position = (self.granularObjects[index].getPosition()+0.002) % 1
+            self.granularObjects[index].update(position, amp)
+            if amp == 0:
+                self.granularObjects[index].stopAndClean()
+                #del self.objects[index]
+                print self.audio.server.getNumberOfStreams()
     
     def switchToPattern(self, index):
         #play new pattern or replace sounds
@@ -312,6 +332,8 @@ class Player():
         for loop in self.loops:
             loop.stop()
         self.audio.stop()
+
+
 
 def main():
     
@@ -337,7 +359,7 @@ def main():
     
     #oscListener = OscListener(player)
     
-    midiListener = MidiListener(player)
+    midiListener = PushMidi(player)
     
     #player.audio.server.gui(locals(), exit=True)
     
