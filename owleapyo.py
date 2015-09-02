@@ -14,7 +14,7 @@ import rdflib
 from rdflib import XSD
 import OSC
 
-from pushmidi import PushMidi
+from pushmidi import PushMidi, MockMidi
 from livernns import LiveDoubleRNN
 
 class RdfReader():
@@ -115,8 +115,8 @@ class SoundObject():
     def play(self):
         signal = self.getSignal() #IMPLEMENT IN INHERITING CLASSES
         signal = Pan(signal, outs=2, pan=self.pan).out()
-        return Disto(signal, drive=self.disto, slope=.8, mul=.15).out()
-        #self.out = signal
+        self.out = Disto(signal, drive=self.disto, slope=.8, mul=.15).out()
+        return self.out
     
     def stopAndClean(self):
         Thread( target = self.stopOut ).start()
@@ -148,6 +148,10 @@ class GranularSoundObject(SoundObject):
     
     def getPosition(self):
         return self.position
+    
+    def stopOut(self):
+        SoundObject.stopOut(self)
+        del self.granulator
 
 class SampleSoundObject(SoundObject):
     
@@ -282,22 +286,29 @@ class Player():
         self.reverbSend = Freeverb(self.mix[1], size=.8, damp=.2, bal=1, mul=1).out()
         #self.reverbSend = Freeverb(signal, size=self.reverb, bal=self.reverb).out()
     
+    def setController(self, controller):
+        self.controller = controller
+    
     def playSound(self, index, velocity):
         amp = 0.99*velocity/127
-        start = self.durations[index]
-        end = self.durations[index+1]
-        newObject = SampleSoundObject("miroglio/garden3.wav", amp, self.frequencyRatio, start, end, reverb=1)
         if index in self.objects:
-            self.objects[index].stopAndClean()
-            self.mix.delInput(index)
-            print "streams", self.audio.server.getNumberOfStreams()
-        self.mix.addInput(index, newObject.play())
-        self.mix.setAmp(index, 1, newObject.reverb*10)
-        self.objects[index] = newObject
+            self.deleteObject(self.objects, index)
+        if velocity > 0:
+            start = self.durations[index]
+            end = self.durations[index+1]
+            newObject = SampleSoundObject("miroglio/garden3.wav", amp, self.frequencyRatio, start, end, reverb=1)
+            self.mix.addInput(index, newObject.play())
+            self.mix.setAmp(index, 1, newObject.reverb*10)
+            self.objects[index] = newObject
     
     def playOrModifyGranularObject(self, index, amp):
         amp = 0.99*amp/127
-        if index not in self.granularObjects:
+        if index in self.granularObjects:
+            position = (self.granularObjects[index].getPosition()+0.002) % 1
+            self.granularObjects[index].update(position, amp)
+            if amp is 0:
+                self.deleteObject(self.granularObjects, index)
+        else:
             start = self.durations[index]
             end = self.durations[index+1]
             self.granularObjects[index] = GranularSoundObject("miroglio/garden3.wav", amp, start, end)
@@ -305,13 +316,18 @@ class Player():
             self.mix.addInput(index, self.granularObjects[index].play())
             self.mix.setAmp(index, 0, 0)
             self.mix.setAmp(index, 1, self.granularObjects[index].reverb*10)
-        else:
-            position = (self.granularObjects[index].getPosition()+0.002) % 1
-            self.granularObjects[index].update(position, amp)
-            if amp == 0:
-                self.granularObjects[index].stopAndClean()
-                #del self.objects[index]
-                print "streams", self.audio.server.getNumberOfStreams()
+    
+    def deleteAllObjects(self):
+        for index in self.objects:
+            self.deleteObject(self.objects, index)
+        for index in self.granularObjects:
+            self.deleteObject(self.granularObjects, index)
+    
+    def deleteObject(self, objects, index):
+        objects[index].stopAndClean()
+        self.mix.delInput(index)
+        print "objects alive: " + str(self.audio.server.getNumberOfStreams())
+        self.controller.setDisplayLine(3, "objects alive: " + str(self.audio.server.getNumberOfStreams()))
     
     def switchToPattern(self, index):
         #play new pattern or replace sounds
@@ -339,8 +355,9 @@ def main():
     
     player = Player()
     rnn = LiveDoubleRNN()
-    pushMidi = PushMidi(player, rnn)
-    rnn.setPushMidi(pushMidi)
+    midi = MockMidi(player, rnn)
+    rnn.setController(midi)
+    player.setController(midi)
     
     durations = RdfReader().loadDurations("miroglio/garden3.n3", "n3")
     space = ObjectSpace("miroglio/garden3.wav", durations)
@@ -374,7 +391,7 @@ def main():
         while True:
             pass
     except KeyboardInterrupt:
-        pushMidi.stop()
+        midi.stop()
         rnn.stop()
         player.audio.server.stop()
         time.sleep(1)

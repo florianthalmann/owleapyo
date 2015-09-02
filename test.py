@@ -53,15 +53,38 @@ def testRhythmPattern(audio):
     time.sleep(1)
     print audio.server.getNumberOfStreams()
 
+def testPlayer():
+    player = Player()
+    time.sleep(1)
+    print player.audio.server.getNumberOfStreams()
+    player.playOrModifyGranularObject(0,127)
+    time.sleep(1)
+    print player.audio.server.getNumberOfStreams()
+    player.playOrModifyGranularObject(0,127)
+    time.sleep(1)
+    print player.audio.server.getNumberOfStreams()
+    player.playOrModifyGranularObject(1,127)
+    time.sleep(1)
+    print player.audio.server.getNumberOfStreams()
+    player.playOrModifyGranularObject(2,127)
+    time.sleep(1)
+    print player.audio.server.getNumberOfStreams()
+    player.playOrModifyGranularObject(3,127)
+    time.sleep(1)
+    print player.audio.server.getNumberOfStreams()
+    player.deleteAllObjects()
+    time.sleep(3)
+    print player.audio.server.getNumberOfStreams()
+
 def main():
-    audio = Audio()
+    #audio = Audio()
     
     #testSoundObject(audio)
     #testLoop(audio)
     #testRhythmPattern(audio)
-    testPan(audio)
+    testPlayer()
     
-    print audio.server.getNumberOfStreams()
+    #print audio.server.getNumberOfStreams()
     
     #audio.server.stop()
     #time.sleep(.5)

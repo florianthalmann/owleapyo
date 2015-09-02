@@ -125,8 +125,8 @@ class LiveDoubleRNN():
         self.isListening = False
         self.isPlaying = False
     
-    def setPushMidi(self, pushMidi):
-        self.player = pushMidi
+    def setController(self, controller):
+        self.controller = controller
     
     def resetTrainingData(self):
         self.currentParameterInput = []
@@ -194,7 +194,7 @@ class LiveDoubleRNN():
                 currentValueChangeSamples = self.valueChangeRNN.sample(self.currentValueChangeInput[0], 25)
                 for n in range(len(currentParameterSamples)):
                     currentValueChange = self.byteToValueChange(currentValueChangeSamples[n])
-                    self.player.changeParameterFromNet(currentParameterSamples[n], int(currentValueChange[0]))
+                    self.controller.changeParameterFromNet(currentParameterSamples[n], int(currentValueChange[0]))
                     print "sample", currentValueChangeSamples[n], currentValueChange
                     time.sleep(currentValueChange[1])
                 currentParameterSeed = currentParameterSamples[len(currentParameterSamples)-1]
