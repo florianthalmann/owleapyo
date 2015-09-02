@@ -15,6 +15,7 @@ from rdflib import XSD
 import OSC
 
 from pushmidi import PushMidi
+from livernns import LiveDoubleRNN
 
 class RdfReader():
     
@@ -99,7 +100,6 @@ class SoundObject():
             self.snd = SndTable(filename)
         else:
             duration = durationRatio*(end-start)
-            print duration
             self.snd = SndTable(filename, start=start, stop=start+duration)
         if pan is None:
             pan = random.uniform(0,1)
@@ -290,7 +290,7 @@ class Player():
         if index in self.objects:
             self.objects[index].stopAndClean()
             self.mix.delInput(index)
-            print self.audio.server.getNumberOfStreams()
+            print "streams", self.audio.server.getNumberOfStreams()
         self.mix.addInput(index, newObject.play())
         self.mix.setAmp(index, 1, newObject.reverb*10)
         self.objects[index] = newObject
@@ -311,7 +311,7 @@ class Player():
             if amp == 0:
                 self.granularObjects[index].stopAndClean()
                 #del self.objects[index]
-                print self.audio.server.getNumberOfStreams()
+                print "streams", self.audio.server.getNumberOfStreams()
     
     def switchToPattern(self, index):
         #play new pattern or replace sounds
@@ -338,6 +338,9 @@ class Player():
 def main():
     
     player = Player()
+    rnn = LiveDoubleRNN()
+    pushMidi = PushMidi(player, rnn)
+    rnn.setPushMidi(pushMidi)
     
     durations = RdfReader().loadDurations("miroglio/garden3.n3", "n3")
     space = ObjectSpace("miroglio/garden3.wav", durations)
@@ -359,8 +362,6 @@ def main():
     
     #oscListener = OscListener(player)
     
-    midiListener = PushMidi(player)
-    
     #player.audio.server.gui(locals(), exit=True)
     
     #midiListener.stop()
@@ -373,7 +374,8 @@ def main():
         while True:
             pass
     except KeyboardInterrupt:
-        midiListener.stop()
+        pushMidi.stop()
+        rnn.stop()
         player.audio.server.stop()
         time.sleep(1)
         player.audio.server.shutdown()

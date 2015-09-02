@@ -5,9 +5,8 @@ BSD License
 from threading import Thread
 import time, math
 import numpy as np
-import mido
 
-class LiveByteRNN():
+class ByteRNN():
     
     def __init__(self):
         # data I/O
@@ -34,7 +33,7 @@ class LiveByteRNN():
         for i in range(100):
             print self.learnAndSample([33,33,33,33,33,0,0,0,0,0,0,33,33,33,33,33,33,33,33,0,0,0,0,0])"""
     
-    def learnAndSample(self, input):
+    def learn(self, input):
         if self.n == 0:
             self.smooth_loss = -np.log(1.0/self.vocab_size)*len(input) # loss at iteration 0
             #from before: SHOULD THE NET EVER BE RESET? WHEN?
@@ -42,9 +41,6 @@ class LiveByteRNN():
         
         inputs = input[0:len(input)-2]
         targets = input[1:len(input)-1]
-
-        # sample from the model now and then
-        sample_ix = self.sample(self.hprev, inputs[0], len(input))
 
         # forward seq_length characters through the net and fetch gradient
         loss, dWxh, dWhh, dWhy, dbh, dby, self.hprev = self.lossFun(inputs, targets, self.hprev)
@@ -59,8 +55,6 @@ class LiveByteRNN():
           param += -self.learning_rate * dparam / np.sqrt(mem + 1e-8) # adagrad update
 
         self.n += 1 # iteration counter
-        
-        return sample_ix
     
     def lossFun(self, inputs, targets, hprev):
       """
@@ -98,7 +92,8 @@ class LiveByteRNN():
         np.clip(dparam, -5, 5, out=dparam) # clip to mitigate exploding gradients
       return loss, dWxh, dWhh, dWhy, dbh, dby, hs[len(inputs)-1]
     
-    def sample(self, h, seed_ix, n):
+    def sample(self, seed_ix, length):
+      h = self.hprev
       """ 
       sample a sequence of integers from the model 
       h is memory state, seed_ix is seed letter for first time step
@@ -106,7 +101,7 @@ class LiveByteRNN():
       x = np.zeros((self.vocab_size, 1))
       x[seed_ix] = 1
       ixes = []
-      for t in xrange(n):
+      for t in xrange(length):
         h = np.tanh(np.dot(self.Wxh, x) + np.dot(self.Whh, h) + self.bh)
         y = np.dot(self.Why, h) + self.by
         p = np.exp(y) / np.sum(np.exp(y))
@@ -122,95 +117,144 @@ class LiveByteRNN():
 class LiveDoubleRNN():
     
     def __init__(self):
-        self.maxTime = 10.0 #sec
-        self.parameterRNN = LiveByteRNN()
-        self.valueChangeRNN = LiveByteRNN()
+        self.maxTime = 3.0 #sec
+        self.parameterRNN = ByteRNN()
+        self.valueChangeRNN = ByteRNN()
         self.resetTrainingData()
-        self.thread = Thread( target = self.startTrainingAndSamplingLoop )
-        self.thread.start()
+        self.isRunning = True
+        self.isListening = False
+        self.isPlaying = False
+    
+    def setPushMidi(self, pushMidi):
+        self.player = pushMidi
     
     def resetTrainingData(self):
         self.currentParameterInput = []
         self.currentValueChangeInput = []
+        self.isTrained = False
+        self.resetPreviousValues()
+    
+    def resetPreviousValues(self):
         self.previousTime = None
         self.previousParameter = None
         self.previousValue = None
     
-    def startTrainingAndSamplingLoop(self):
-        self.isRunning = True
+    def toggleListening(self):
+        self.isListening = not self.isListening
+        print "listening", self.isListening
+        if self.isListening:
+            if not hasattr(self, 'trainingThread'):
+                self.trainingThread = Thread( target = self.startTrainingLoop )
+                self.trainingThread.start()
+        if not self.isListening:
+            print "stop listening"
+            self.resetPreviousValues()
+        return self.isListening
+    
+    def togglePlaying(self):
+        if not self.isPlaying and self.isTrained:
+            if not hasattr(self, 'playingThread'):
+                self.playingThread = Thread( target = self.startPlayingLoop )
+                self.playingThread.start()
+            self.isPlaying = True
+        else:
+            self.isPlaying = False
+        print "playing", self.isPlaying, self.isTrained
+        return self.isPlaying
+    
+    def startTrainingLoop(self):
         i = 0
         while self.isRunning:
             #once input large enough
+            #print len(self.currentParameterInput)
             if len(self.currentParameterInput) > 100:
                 #learn in chunks
                 if i < len(self.currentParameterInput)-24:
                     currentParameterChunk = self.currentParameterInput[i:i+24]
                     currentValueChangeChunk = self.currentValueChangeInput[i:i+24]
-                    currentParameterSample = self.parameterRNN.learnAndSample(currentParameterChunk)
-                    currentValueChangeSample = self.valueChangeRNN.learnAndSample(currentValueChangeChunk)
-                    if (self.isPlaying):
-                        print currentParameterSample, currentValueChangeSample
+                    currentParameterSample = self.parameterRNN.learn(currentParameterChunk)
+                    currentValueChangeSample = self.valueChangeRNN.learn(currentValueChangeChunk)
+                    self.isTrained = True
+                    i += 24
                 #restart in beginning of input
                 else:
                     i = 0
+            #print i
+            time.sleep(0.1)
     
-    def toggleListening(self):
-        self.isListening = not self.isListening
-        if not self.isListening:
-            self.resetTrainingData()
-        return self.isListening
+    def startPlayingLoop(self):
+        currentParameterSeed = None
+        currentValueChangeSeed = None
+        while self.isRunning:
+            if self.isPlaying:
+                if currentParameterSeed is None:
+                    currentParameterSeed = self.currentParameterInput[0]
+                    currentValueChangeSeed = self.currentValueChangeInput[0]
+                currentParameterSamples = self.parameterRNN.sample(self.currentParameterInput[0], 25)
+                currentValueChangeSamples = self.valueChangeRNN.sample(self.currentValueChangeInput[0], 25)
+                for n in range(len(currentParameterSamples)):
+                    currentValueChange = self.byteToValueChange(currentValueChangeSamples[n])
+                    self.player.changeParameterFromNet(currentParameterSamples[n], int(currentValueChange[0]))
+                    print "sample", currentValueChangeSamples[n], currentValueChange
+                    time.sleep(currentValueChange[1])
+                currentParameterSeed = currentParameterSamples[len(currentParameterSamples)-1]
+                currentValueChangeSeed = currentValueChangeSamples[len(currentValueChangeSamples)-1]
     
-    def togglePlaying():
-        self.isPlaying = not self.isPlaying
-        return self.isPlaying
-    
-    def setValue(self, parameter, deltaValue):
+    def setValueChange(self, parameter, deltaValue):
         if self.isListening:
             currentTime = time.time()
             if self.previousTime is not None:
                 deltaTime = currentTime-self.previousTime
                 valueChangeByte = self.valueChangeToByte(deltaValue, deltaTime)
+                print "valueChange", deltaValue, deltaTime, valueChangeByte
                 self.currentParameterInput.append(parameter)
                 self.currentValueChangeInput.append(valueChangeByte)
             self.previousTime = currentTime
             self.previousParameter = parameter
-            self.previousValues[parameter] = value
-    
-    def getValue(self):
-        return [self.parameterRNN.getSample(), self.byteToValueChange(self.valueChangeRNN.getSample())]
+            self.previousValue = deltaValue
+        #print self.isListening, self.currentValueChangeInput
     
     def valueChangeToByte(self, deltaValue, deltaTime):
         #3bit for time, 1bit for sign, 3bit for value
-        time = 127.0*min(deltaTime,self.maxTime)/self.maxTime #[0,self.maxTime] -> [0,127]
+        time = 127.0*min(deltaTime,self.maxTime)/self.maxTime #[0,self.maxTime] -> [1,127]
         time = self.toLogBits(time)<<4 #to first 3 bit
         sign = 1 if deltaValue >= 0 else 0 #1 for pos, 0 for neg
         sign = int(str(sign))<<3 #to 4th bit
         value = abs(deltaValue)
         value = self.toLogBits(value) #to last 3 bit
-        print time, sign, value, time+sign+value
+        #print time, sign, value, time+sign+value
         return time+sign+value #struct.unpack(i,time+sign+value)]
     
     def byteToValueChange(self, byte):
         time = byte>>4
         sign = byte-(time<<4)>>3
         value = byte-(time<<4)-(sign<<3)
-        print time, sign, value
+        #print time, sign, value
         sign = sign*2-1
         deltaValue = sign*self.fromLogBits(value)
         deltaTime = self.maxTime*self.fromLogBits(time)/127
         return [deltaValue, deltaTime]
     
     def toLogBits(self, value): #value in [0,127]
-        return int(round(math.log(value, 2))) #-> [0,7] log
+        return int(round(math.log(value+1, 2))) #-> [0,7] log
     
     def fromLogBits(self, value): #value in [0,7] log
-        return math.pow(2, value) #-> [0,127]
+        return math.pow(2, value)-1 #-> [0,127]
+    
+    def stop(self):
+        self.isRunning = False
+        if hasattr(self, 'trainingThread'):
+            self.trainingThread.join()
+        if hasattr(self, 'playingThread'):
+            self.playingThread.join()
+
 
 def main():
-    LiveByteRNN()
-    """rnns = DoubleLiveRNN()
-    bytes = rnns.valueChangeToTwoBytes(0, 23, 0.076)
-    print rnns.twoBytesToValueChange(bytes)#[10, 5, 2.5, 1.25, 0.625, 0.3125, 0.15075, 0.075])"""
+    #LiveByteRNN()
+    rnns = LiveDoubleRNN()
+    bytes = rnns.valueChangeToByte(23, 0.02)
+    print bytes
+    print rnns.byteToValueChange(bytes)#[10, 5, 2.5, 1.25, 0.625, 0.3125, 0.15075, 0.075])""
     """rnn = LiveCharRNN()
     MidiListener(rnn)
     rnn.startListening()

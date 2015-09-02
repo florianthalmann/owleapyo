@@ -3,23 +3,21 @@ import mido
 
 class PushMidi():
     
-    def __init__(self, player):
+    def __init__(self, player, rnn):
         self.player = player
+        self.rnn = rnn
         mido.set_backend('mido.backends.rtmidi')
         self.outport = mido.open_output('Ableton Push User Port')
-        #self.setDisplayLine(2, "Yeah, let's play some fucking great sound")
-        #self.clearDisplayLine(2)
         self.midiModeNames = ["continuous", "discrete"]
         self.setMidiMode(0)
+        self.resetPads()
         self.thread = Thread( target = self.listenToMidi )
         self.thread.start()
+        self.currentValues = {}
     
-    def initUserMode(self):
-        print mido.get_output_names()
-        
-        self.outport.send(mido.Message('note_on', note=43, velocity=3))
-        #240,71,127,21,<24+line(0-3)>,0,69,0,<68xChars>,247
-        #240,71,127,21,98,0,1,1,247
+    def resetPads(self):
+        for i in range(36,100):
+            self.setPadLight(i, 0)
     
     def setDisplayLine(self, line, string):
         numbers = [ord(c) for c in string]
@@ -45,19 +43,48 @@ class PushMidi():
         self.midiMode = index
         self.setDisplayLine(3, self.midiModeNames[self.midiMode])
     
-    def toggleNetListening(self, index):
-        isOn = self.player.toggleNetListening()
-        self.setButtonLight(self, 86, isOn)
+    def toggleNetListening(self):
+        isOn = self.rnn.toggleListening()
+        self.setButtonLight(86, isOn)
     
-    def toggleNetPlaying(self, index):
-        isOn = self.player.toggleNetPlaying()
-        self.setButtonLight(self, 85, isOn)
+    def toggleNetPlaying(self):
+        isOn = self.rnn.togglePlaying()
+        self.setButtonLight(85, isOn)
+    
+    def setParameterFromMidi(self, parameter, value):
+        previousValue = self.currentValues[parameter] if parameter in self.currentValues else 0
+        self.setParameter(parameter, value)
+        delta = value-previousValue
+        if delta is not 0:
+            self.rnn.setValueChange(parameter, delta)
+    
+    def changeParameterFromNet(self, parameter, valueChange): #relative parameter
+        previousValue = self.currentValues[parameter] if parameter in self.currentValues else 0
+        newValue = min(max(previousValue+valueChange,0), 127)
+        #print "change", parameter, valueChange, newValue
+        self.setParameter(parameter, newValue)
+    
+    def setParameter(self, parameter, value):
+        self.currentValues[parameter] = value
+        if 36 <= parameter and parameter <= 99: #note played
+            if self.midiMode is 0:
+                self.player.playOrModifyGranularObject(parameter-36, value)
+                self.setPadLight(parameter, value)
+            elif self.midiMode is 1:
+                if value > 0:
+                    self.player.playSound(parameter-36, value)
+                self.setPadLight(parameter, value)
+            #IF MODE PATTERN #self.player.switchToPattern(msg.note)
+    
+    def setPadLight(self, note, velocity):
+        velocity = int(round(4.0*velocity/128))
+        self.outport.send(mido.Message('note_on', note=note, velocity=velocity))
     
     def setButtonLight(self, index, turnOn):
         if turnOn:
-            self.outport.send(mido.Message('note_on', note=index, velocity=4))
+            self.outport.send(mido.Message('control_change', control=index, value=4))
         else:
-            self.outport.send(mido.Message('note_on', note=index, velocity=0))
+            self.outport.send(mido.Message('control_change', control=index, value=0))
     
     def listenToMidi(self):
         self.isRunning = True
@@ -66,7 +93,7 @@ class PushMidi():
             self.inport = mido.open_input('Ableton Push User Port')
             while self.isRunning:
                 msg = self.inport.receive()
-                print msg
+                #print msg
                 if msg.type == 'control_change':
                     if msg.control is 20 and msg.value is 127:
                         self.setMidiMode(0)
@@ -78,22 +105,16 @@ class PushMidi():
                         self.toggleNetPlaying()
                     #self.player.getCurrentPattern().setImprecision(msg.value)
                     pass
-                if self.midiMode is 0:
-                    if msg.type == 'polytouch':
-                        self.player.playOrModifyGranularObject(msg.note-36, msg.value)
-                    if msg.type == 'note_off':
-                        self.player.playOrModifyGranularObject(msg.note-36, 0)
-                else:
-                    if msg.type == 'note_on':
-                        self.player.playSound(msg.note-36, msg.velocity)
-                        #self.player.switchToPattern(msg.note)
+                if msg.type is 'polytouch':
+                    self.setParameterFromMidi(msg.note, msg.value)
+                if msg.type is 'note_on' or msg.type is 'note_off':
+                    self.setParameterFromMidi(msg.note, msg.velocity)
         except IOError as e:
             print e
     
     def stop(self):
         self.isRunning = False
-        if hasattr(self, 'thread') and self.thread.isAlive():
-            self.thread.join()
+        self.thread.join()
 
 
 def main():
