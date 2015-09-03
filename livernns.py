@@ -116,7 +116,8 @@ class ByteRNN():
 
 class LiveDoubleRNN():
     
-    def __init__(self):
+    def __init__(self, controller):
+        self.controller = controller
         self.maxTime = 3.0 #sec
         self.parameterRNN = ByteRNN()
         self.valueChangeRNN = ByteRNN()
@@ -124,9 +125,6 @@ class LiveDoubleRNN():
         self.isRunning = True
         self.isListening = False
         self.isPlaying = False
-    
-    def setController(self, controller):
-        self.controller = controller
     
     def resetTrainingData(self):
         self.currentParameterInput = []

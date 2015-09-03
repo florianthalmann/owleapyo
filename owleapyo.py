@@ -272,9 +272,11 @@ class RhythmPattern():
 
 class Player():
     
-    def __init__(self):
+    def __init__(self, controller):
+        self.controller = controller
         self.audio = Audio()
-        self.durations = RdfReader().loadDurations("miroglio/garden3_onset.n3", "n3")
+        self.currentSegmentsIndex = 0
+        self.setFile("miroglio/garden3")
         self.durationRatio = 1
         self.frequencyRatio = 1
         self.patterns = {}
@@ -286,36 +288,53 @@ class Player():
         self.reverbSend = Freeverb(self.mix[1], size=.8, damp=.2, bal=1, mul=1).out()
         #self.reverbSend = Freeverb(signal, size=self.reverb, bal=self.reverb).out()
     
-    def setController(self, controller):
-        self.controller = controller
+    def setFile(self, filename):
+        self.filename = filename + ".wav"
+        self.durations = RdfReader().loadDurations(filename + "_onset.n3", "n3")
+        self.updateFileAndSegmentInfo()
+    
+    def changeSegmentsIndex(self, value):
+        self.setSegmentsIndex(self.currentSegmentsIndex + value)
+    
+    def setSegmentsIndex(self, value):
+        if 0 <= value and value < len(self.durations):
+            self.currentSegmentsIndex = value
+            self.updateFileAndSegmentInfo()
+    
+    def updateFileAndSegmentInfo(self):
+        self.controller.setDisplayLine(1, self.filename + " " + str(self.currentSegmentsIndex) + " " + str(len(self.durations)))
     
     def playSound(self, index, velocity):
+        index = self.currentSegmentsIndex + index
         amp = 0.99*velocity/127
-        if index in self.objects:
-            self.deleteObject(self.objects, index)
-        if velocity > 0:
-            start = self.durations[index]
-            end = self.durations[index+1]
-            newObject = SampleSoundObject("miroglio/garden3.wav", amp, self.frequencyRatio, start, end, reverb=1)
-            self.mix.addInput(index, newObject.play())
-            self.mix.setAmp(index, 1, newObject.reverb*10)
-            self.objects[index] = newObject
+        if index < len(self.durations)-1:
+            if index in self.objects:
+                self.deleteObject(self.objects, index)
+            if velocity > 0:
+                start = self.durations[index]
+                end = self.durations[index+1]
+                newObject = SampleSoundObject(self.filename, amp, self.frequencyRatio, start, end, reverb=1)
+                self.mix.addInput(index, newObject.play())
+                self.mix.setAmp(index, 1, newObject.reverb*10)
+                self.objects[index] = newObject
     
     def playOrModifyGranularObject(self, index, amp):
-        amp = 0.99*amp/127
-        if index in self.granularObjects:
-            position = (self.granularObjects[index].getPosition()+0.002) % 1
-            self.granularObjects[index].update(position, amp)
-            if amp is 0:
-                self.deleteObject(self.granularObjects, index)
-        else:
-            start = self.durations[index]
-            end = self.durations[index+1]
-            self.granularObjects[index] = GranularSoundObject("miroglio/garden3.wav", amp, start, end)
-            self.granularObjects[index].play()
-            self.mix.addInput(index, self.granularObjects[index].play())
-            self.mix.setAmp(index, 0, 0)
-            self.mix.setAmp(index, 1, self.granularObjects[index].reverb*10)
+        index = self.currentSegmentsIndex + index
+        if index < len(self.durations)-1:
+            amp = 0.99*amp/127
+            if index in self.granularObjects:
+                position = (self.granularObjects[index].getPosition()+0.002) % 1
+                self.granularObjects[index].update(position, amp)
+                if amp is 0:
+                    self.deleteObject(self.granularObjects, index)
+            else:
+                start = self.durations[index]
+                end = self.durations[index+1]
+                self.granularObjects[index] = GranularSoundObject(self.filename, amp, start, end)
+                self.granularObjects[index].play()
+                self.mix.addInput(index, self.granularObjects[index].play())
+                self.mix.setAmp(index, 0, 0)
+                self.mix.setAmp(index, 1, self.granularObjects[index].reverb*10)
     
     def deleteAllObjects(self):
         for index in self.objects:
@@ -326,7 +345,6 @@ class Player():
     def deleteObject(self, objects, index):
         objects[index].stopAndClean()
         self.mix.delInput(index)
-        print "objects alive: " + str(self.audio.server.getNumberOfStreams())
         self.controller.setDisplayLine(3, "objects alive: " + str(self.audio.server.getNumberOfStreams()))
     
     def switchToPattern(self, index):
@@ -353,14 +371,13 @@ class Player():
 
 def main():
     
-    player = Player()
-    rnn = LiveDoubleRNN()
-    midi = MockMidi(player, rnn)
-    rnn.setController(midi)
-    player.setController(midi)
+    controller = PushMidi()
+    rnn = LiveDoubleRNN(controller)
+    player = Player(controller)
+    controller.setNetAndPlayer(rnn, player)
     
-    durations = RdfReader().loadDurations("miroglio/garden3.n3", "n3")
-    space = ObjectSpace("miroglio/garden3.wav", durations)
+    #durations = RdfReader().loadDurations("miroglio/garden3_onset.n3", "n3")
+    #space = ObjectSpace("miroglio/garden3.wav", durations)
     #oscListener = OscListener(space)
     
     """randomIndex = randint(0,len(durations)-2)
@@ -391,7 +408,7 @@ def main():
         while True:
             pass
     except KeyboardInterrupt:
-        midi.stop()
+        controller.stop()
         rnn.stop()
         player.audio.server.stop()
         time.sleep(1)
