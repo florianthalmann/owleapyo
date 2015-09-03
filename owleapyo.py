@@ -101,6 +101,8 @@ class SoundObject():
         else:
             duration = durationRatio*(end-start)
             self.snd = SndTable(filename, start=start, stop=start+duration)
+            self.snd.fadein(0.01)
+            self.snd.fadeout(0.01)
         if pan is None:
             pan = random.uniform(0,1)
         if reverb is None:
@@ -122,10 +124,13 @@ class SoundObject():
         Thread( target = self.stopOut ).start()
     
     def stopOut(self):
-        time.sleep(1)
         if hasattr(self, 'out'):
             self.out.stop()
-            del self.out
+            time.sleep(1)
+            #if still there, delete..
+            if hasattr(self, 'out'):
+                del self.out
+                "DEL!"
 
 class GranularSoundObject(SoundObject):
     
@@ -313,7 +318,7 @@ class Player():
             if velocity > 0:
                 start = self.durations[index]
                 end = self.durations[index+1]
-                newObject = SampleSoundObject(self.filename, amp, self.frequencyRatio, start, end, reverb=1)
+                newObject = SampleSoundObject(self.filename, amp, self.frequencyRatio, start, end)
                 self.mix.addInput(index, newObject.play())
                 self.mix.setAmp(index, 1, newObject.reverb*10)
                 self.objects[index] = newObject
@@ -325,7 +330,7 @@ class Player():
             if index in self.granularObjects:
                 position = (self.granularObjects[index].getPosition()+0.002) % 1
                 self.granularObjects[index].update(position, amp)
-                if amp is 0:
+                if amp == 0:
                     self.deleteObject(self.granularObjects, index)
             else:
                 start = self.durations[index]
@@ -344,8 +349,9 @@ class Player():
     
     def deleteObject(self, objects, index):
         objects[index].stopAndClean()
+        del objects[index]
         self.mix.delInput(index)
-        self.controller.setDisplayLine(3, "objects alive: " + str(self.audio.server.getNumberOfStreams()))
+        self.controller.setDisplayLine(2, "objects alive: " + str(self.audio.server.getNumberOfStreams()))
     
     def switchToPattern(self, index):
         #play new pattern or replace sounds

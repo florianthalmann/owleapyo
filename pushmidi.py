@@ -75,7 +75,7 @@ class MidiController():
             self.inport = mido.open_input(self.getInputPortName())
             while self.isRunning:
                 msg = self.inport.receive()
-                print msg
+                #print msg
                 if msg.type == 'control_change':
                     if msg.control is self.getSegmentControl():
                         self.updateSegmentsIndex(msg.value)
@@ -89,9 +89,9 @@ class MidiController():
                         self.toggleNetPlaying()
                     #self.player.getCurrentPattern().setImprecision(msg.value)
                     pass
-                if msg.type is 'polytouch':
+                if self.midiMode is 0 and msg.type is 'polytouch':
                     self.setParameterFromMidi(msg.note, msg.value)
-                if self.midiMode is 1 and msg.type is 'note_on' or msg.type is 'note_off':
+                if self.midiMode is 1 and (msg.type is 'note_on' or msg.type is 'note_off'):
                     self.setParameterFromMidi(msg.note, msg.velocity)
         except IOError as e:
             print e
