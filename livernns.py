@@ -120,7 +120,7 @@ class LiveDoubleRNN():
     
     def __init__(self, controller):
         self.controller = controller
-        self.maxTime = 3.0 #sec
+        self.maxTime = 1.5 #sec
         self.parameterRNN = ByteRNN()
         self.valueChangeRNN = ByteRNN()
         self.isTrained = False

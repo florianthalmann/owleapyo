@@ -120,11 +120,15 @@ class SoundObject():
         self.out = Disto(signal, drive=self.disto, slope=.8, mul=.15).out()
         return self.out
     
+    def isPlaying(self):
+        return hasattr(self, 'out') and self.out.isPlaying()
+    
     def stopAndClean(self):
         Thread( target = self.stopOut ).start()
     
     def stopOut(self):
         if hasattr(self, 'out'):
+            self.out.setMul(Fader(fadein=0, fadeout=1, dur=0, mul=1).out())
             self.out.stop()
             time.sleep(1)
             #if still there, delete..
@@ -144,12 +148,13 @@ class GranularSoundObject(SoundObject):
     
     def update(self, position, amplitude, duration=None, pitch=None):
         self.position = position
-        self.granulator.setPos(position*self.snd.getSize()[0])
-        self.granulator.setMul(amplitude)
-        if duration != None:
-            self.granulator.setDur(duration*0.3)
-        if pitch != None:
-            self.granulator.setPitch(pitch)
+        if hasattr(self, 'granulator'):
+            self.granulator.setPos(position*self.snd.getSize()[0])
+            self.granulator.setMul(amplitude)
+            if duration != None:
+                self.granulator.setDur(duration*0.3)
+            if pitch != None:
+                self.granulator.setPitch(pitch)
     
     def getPosition(self):
         return self.position
@@ -170,6 +175,30 @@ class SampleSoundObject(SoundObject):
         
     def getSignal(self):
         return TableRead(table=self.snd, freq=self.frequency, mul=self.amplitude).out()
+
+class LoopSoundObject(SoundObject):
+    
+    def __init__(self, filename, amplitude=1, frequencyRatio=1, start=None, end=None, durationRatio=1, disto=None, reverb=None, pan=None):
+        SoundObject.__init__(self, filename, amplitude, start, end, durationRatio, disto, reverb, pan)
+        if self.snd.getDur() > 0:
+            self.frequency = frequencyRatio*(1/self.snd.getDur())
+        else:
+            self.frequency = 1
+        print start, end
+    
+    def getSignal(self):
+        if not hasattr(self, 'tbl'):
+            self.tbl = TableRead(table=self.snd, freq=self.frequency, loop=1, mul=self.amplitude)
+        return self.tbl.out()
+    
+    def append(self, filename, start, end):
+        duration = 1*(end-start)
+        self.snd.append(filename, crossfade=0.1, start=start, stop=start+duration)
+        self.tbl.setFreq(self.snd.getRate())
+        #print self.snd.getSize(), self.snd.getRate()
+    
+    def stop(self):
+        self.tbl.stop()
 
 class ObjectSpace():
     
@@ -287,6 +316,9 @@ class Player():
         self.currentPattern = None
         self.objects = {}
         self.granularObjects = {}
+        self.loops = {}
+        self.currentLoop = 0
+        self.playingLoop = None
         self.currentSegmentsIndex = 0
         self.setFile("miroglio/garden3")
         self.mix = Mixer(outs=2, chnls=2, time=.025)
@@ -332,7 +364,7 @@ class Player():
         index = self.currentSegmentsIndex + index
         if index < len(self.durations)-1:
             amp = 0.99*amp/127
-            if index in self.granularObjects:
+            if index in self.granularObjects and self.granularObjects[index].isPlaying():
                 position = (self.granularObjects[index].getPosition()+0.002) % 1
                 self.granularObjects[index].update(position, amp)
                 if amp == 0:
@@ -346,16 +378,47 @@ class Player():
                 self.mix.setAmp(index, 0, 0)
                 self.mix.setAmp(index, 1, self.granularObjects[index].reverb*10)
     
+    def switchLoop(self, deltaIndex):
+        newIndex = self.currentLoop + deltaIndex
+        if newIndex >= 0:
+            if newIndex in self.loops:
+                self.loops[self.currentLoop].stop()
+                self.loops[newIndex].play()
+                self.playingLoop = newIndex
+            self.currentLoop = newIndex
+            self.controller.setStatusLine(0, "loop: " + str(self.currentLoop))
+    
+    def addSoundToLoop(self, index, velocity):
+        #MEASURE TIME SINCE LAST ONE AND ADD!!
+        #(MAKE SEAMLESS LOOPS STRETCH AND EXACTLY MIRROR RHYTHM!!!!)
+        index = self.currentSegmentsIndex + index
+        if index < len(self.durations)-1:
+            amp = 0.99*velocity/127
+            start = self.durations[index]
+            end = self.durations[index+1]
+            if self.currentLoop not in self.loops:
+                self.loops[self.currentLoop] = LoopSoundObject(self.filename, amp, self.frequencyRatio, start, end, reverb=0)
+                self.mix.addInput(index, self.loops[self.currentLoop].play())
+                if self.playingLoop is not None:
+                    self.loops[self.playingLoop].stop()
+                self.playingLoop = self.currentLoop
+                self.mix.setAmp(index, 1, self.loops[self.currentLoop].reverb*10)
+            else:
+                #INCLUDE DYNAMICS!!!!!
+                self.loops[self.currentLoop].append(self.filename, start, end)
+    
     def deleteAllObjects(self):
-        for index in self.objects:
+        existingIndices = self.objects.keys()
+        for index in existingIndices:
             self.deleteObject(self.objects, index)
-        for index in self.granularObjects:
+        existingIndices = self.granularObjects.keys()
+        for index in existingIndices:
             self.deleteObject(self.granularObjects, index)
     
     def deleteObject(self, objects, index):
         objects[index].stopAndClean()
         if index in objects: #if still there, clean
-            pass#del objects[index]
+            del objects[index]
         self.mix.delInput(index)
         self.updateInfo()
     
