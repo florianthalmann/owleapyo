@@ -45,7 +45,7 @@ class ByteRNN():
         # forward seq_length characters through the net and fetch gradient
         loss, dWxh, dWhh, dWhy, dbh, dby, self.hprev = self.lossFun(inputs, targets, self.hprev)
         self.smooth_loss = self.smooth_loss * 0.999 + loss * 0.001
-        if self.n % 100 == 0: print 'iter %d, loss: %f' % (self.n, self.smooth_loss) # print progress
+        #if self.n % 100 == 0: print 'iter %d, loss: %f' % (self.n, self.smooth_loss) # print progress
 
         # perform parameter update with Adagrad
         for param, dparam, mem in zip([self.Wxh, self.Whh, self.Why, self.bh, self.by], 
@@ -55,6 +55,8 @@ class ByteRNN():
           param += -self.learning_rate * dparam / np.sqrt(mem + 1e-8) # adagrad update
 
         self.n += 1 # iteration counter
+        
+        return [self.n, self.smooth_loss]
     
     def lossFun(self, inputs, targets, hprev):
       """
@@ -121,21 +123,31 @@ class LiveDoubleRNN():
         self.maxTime = 3.0 #sec
         self.parameterRNN = ByteRNN()
         self.valueChangeRNN = ByteRNN()
+        self.isTrained = False
         self.resetTrainingData()
         self.isRunning = True
         self.isListening = False
         self.isPlaying = False
+        self.updateInfo()
     
     def resetTrainingData(self):
+        self.iteration = 0
+        self.parameterLoss = 0
+        self.valueChangeLoss = 0
         self.currentParameterInput = []
         self.currentValueChangeInput = []
-        self.isTrained = False
         self.resetPreviousValues()
+        self.updateInfo()
     
     def resetPreviousValues(self):
         self.previousTime = None
         self.previousParameter = None
         self.previousValue = None
+    
+    def updateInfo(self):
+        info = "training set size: " + str(len(self.currentParameterInput)) + ", iter: " + str(self.iteration)
+        info += ", loss1: " + str(round(self.parameterLoss)) + ", loss2: " + str(round(self.valueChangeLoss))
+        self.controller.setDisplayLine(2, info)
     
     def toggleListening(self):
         self.isListening = not self.isListening
@@ -157,7 +169,6 @@ class LiveDoubleRNN():
             self.isPlaying = True
         else:
             self.isPlaying = False
-        print "playing", self.isPlaying, self.isTrained
         return self.isPlaying
     
     def startTrainingLoop(self):
@@ -165,14 +176,19 @@ class LiveDoubleRNN():
         while self.isRunning:
             #once input large enough
             #print len(self.currentParameterInput)
-            if len(self.currentParameterInput) > 100:
+            if len(self.currentParameterInput) > 24:
                 #learn in chunks
                 if i < len(self.currentParameterInput)-24:
                     currentParameterChunk = self.currentParameterInput[i:i+24]
                     currentValueChangeChunk = self.currentValueChangeInput[i:i+24]
-                    currentParameterSample = self.parameterRNN.learn(currentParameterChunk)
-                    currentValueChangeSample = self.valueChangeRNN.learn(currentValueChangeChunk)
+                    parameterResult = self.parameterRNN.learn(currentParameterChunk)
+                    valueChangeResult = self.valueChangeRNN.learn(currentValueChangeChunk)
                     self.isTrained = True
+                    if parameterResult[0] % 10 == 0:
+                        self.iteration = parameterResult[0]
+                        self.parameterLoss = parameterResult[1]
+                        self.valueChangeLoss = valueChangeResult[1]
+                        self.updateInfo()
                     i += 24
                 #restart in beginning of input
                 else:
@@ -188,12 +204,12 @@ class LiveDoubleRNN():
                 if currentParameterSeed is None:
                     currentParameterSeed = self.currentParameterInput[0]
                     currentValueChangeSeed = self.currentValueChangeInput[0]
-                currentParameterSamples = self.parameterRNN.sample(self.currentParameterInput[0], 25)
-                currentValueChangeSamples = self.valueChangeRNN.sample(self.currentValueChangeInput[0], 25)
+                currentParameterSamples = self.parameterRNN.sample(currentParameterSeed, 25)
+                currentValueChangeSamples = self.valueChangeRNN.sample(currentValueChangeSeed, 25)
                 for n in range(len(currentParameterSamples)):
                     currentValueChange = self.byteToValueChange(currentValueChangeSamples[n])
                     self.controller.changeParameterFromNet(currentParameterSamples[n], int(currentValueChange[0]))
-                    print "sample", currentValueChangeSamples[n], currentValueChange
+                    #print "sample", currentValueChangeSamples[n], currentValueChange
                     time.sleep(currentValueChange[1])
                 currentParameterSeed = currentParameterSamples[len(currentParameterSamples)-1]
                 currentValueChangeSeed = currentValueChangeSamples[len(currentValueChangeSamples)-1]
@@ -204,9 +220,10 @@ class LiveDoubleRNN():
             if self.previousTime is not None:
                 deltaTime = currentTime-self.previousTime
                 valueChangeByte = self.valueChangeToByte(deltaValue, deltaTime)
-                print "valueChange", deltaValue, deltaTime, valueChangeByte
+                #print "valueChange", deltaValue, deltaTime, valueChangeByte
                 self.currentParameterInput.append(parameter)
                 self.currentValueChangeInput.append(valueChangeByte)
+                self.updateInfo()
             self.previousTime = currentTime
             self.previousParameter = parameter
             self.previousValue = deltaValue

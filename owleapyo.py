@@ -156,7 +156,8 @@ class GranularSoundObject(SoundObject):
     
     def stopOut(self):
         SoundObject.stopOut(self)
-        del self.granulator
+        if hasattr(self, 'granulator'):
+            del self.granulator
 
 class SampleSoundObject(SoundObject):
     
@@ -280,14 +281,14 @@ class Player():
     def __init__(self, controller):
         self.controller = controller
         self.audio = Audio()
-        self.currentSegmentsIndex = 0
-        self.setFile("miroglio/garden3")
         self.durationRatio = 1
         self.frequencyRatio = 1
         self.patterns = {}
         self.currentPattern = None
         self.objects = {}
         self.granularObjects = {}
+        self.currentSegmentsIndex = 0
+        self.setFile("miroglio/garden3")
         self.mix = Mixer(outs=2, chnls=2, time=.025)
         #self.out = self.mix[0]
         self.reverbSend = Freeverb(self.mix[1], size=.8, damp=.2, bal=1, mul=1).out()
@@ -296,7 +297,8 @@ class Player():
     def setFile(self, filename):
         self.filename = filename + ".wav"
         self.durations = RdfReader().loadDurations(filename + "_onset.n3", "n3")
-        self.updateFileAndSegmentInfo()
+        self.deleteAllObjects()
+        self.updateInfo()
     
     def changeSegmentsIndex(self, value):
         self.setSegmentsIndex(self.currentSegmentsIndex + value)
@@ -304,10 +306,13 @@ class Player():
     def setSegmentsIndex(self, value):
         if 0 <= value and value < len(self.durations):
             self.currentSegmentsIndex = value
-            self.updateFileAndSegmentInfo()
+            self.deleteAllObjects()
+            self.updateInfo()
     
-    def updateFileAndSegmentInfo(self):
-        self.controller.setDisplayLine(1, self.filename + " " + str(self.currentSegmentsIndex) + " " + str(len(self.durations)))
+    def updateInfo(self):
+        info = self.filename + " " + str(self.currentSegmentsIndex) + " " + str(len(self.durations))
+        info += "   (objects alive: " + str(self.audio.server.getNumberOfStreams()) + ")"
+        self.controller.setDisplayLine(1, info)
     
     def playSound(self, index, velocity):
         index = self.currentSegmentsIndex + index
@@ -349,9 +354,10 @@ class Player():
     
     def deleteObject(self, objects, index):
         objects[index].stopAndClean()
-        del objects[index]
+        if index in objects: #if still there, clean
+            pass#del objects[index]
         self.mix.delInput(index)
-        self.controller.setDisplayLine(2, "objects alive: " + str(self.audio.server.getNumberOfStreams()))
+        self.updateInfo()
     
     def switchToPattern(self, index):
         #play new pattern or replace sounds

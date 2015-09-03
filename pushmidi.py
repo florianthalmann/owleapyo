@@ -87,6 +87,8 @@ class MidiController():
                         self.toggleNetListening()
                     if msg.control is 85 and msg.value is 127:
                         self.toggleNetPlaying()
+                    if msg.control is 87 and msg.value is 127:
+                        self.rnn.resetTrainingData()
                     #self.player.getCurrentPattern().setImprecision(msg.value)
                     pass
                 if self.midiMode is 0 and msg.type is 'polytouch':
@@ -138,6 +140,9 @@ class PushMidi(MidiController):
             self.setPadLight(i, 0)
         for i in range(3):
             self.clearDisplayLine(i)
+        self.setButtonLight(85, 0)
+        self.setButtonLight(86, 0)
+        self.setButtonLight(87, 1)
     
     def setDisplayLine(self, line, string):
         numbers = [ord(c) for c in string]
