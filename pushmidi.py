@@ -10,8 +10,9 @@ class MidiController():
             self.outport = mido.open_output('Ableton Push User Port')
         except AttributeError:
             pass
+        self.dialLine = ["","","","","","","",""]
         self.statusLine = {}
-        self.modeNames = ["grain mode", "sample mode", "loop mode"]
+        self.modeNames = ["grain", "sample", "loop", "pattern"]
         self.setNetMode(0)
         self.setMidiMode(0)
         self.thread = Thread( target = self.listenToMidi )
@@ -28,6 +29,7 @@ class MidiController():
         self.setButtonLight(20, index is 0)
         self.setButtonLight(21, index is 1)
         self.setButtonLight(22, index is 2)
+        self.setButtonLight(23, index is 3)
     
     def setNetMode(self, index):
         self.netMode = index
@@ -35,6 +37,7 @@ class MidiController():
         self.setButtonLight(102, index is 0)
         self.setButtonLight(103, index is 1)
         self.setButtonLight(104, index is 2)
+        self.setButtonLight(105, index is 3)
     
     def toggleNetListening(self):
         isOn = self.rnn.toggleListening()
@@ -66,8 +69,24 @@ class MidiController():
                 self.player.playSound(parameter-36, value)
             elif mode is 2 and value > 0:
                 self.player.addSoundToLoop(parameter-36, value)
-            self.setPadLight(parameter, value)
-            #IF MODE PATTERN #self.player.switchToPattern(msg.note)
+            elif mode is 3 and value > 0:
+                self.player.switchToPattern(parameter-36)
+            
+            if mode < 3:
+                self.setPadLight(parameter, value)
+    
+    def setDialStatus(self, index, string):
+        while len(string) < 8:
+            string += " "
+        if len(string) > 8:
+            string = string[:8-len(string)]
+        self.dialLine[index] = string
+        dialLine = ""
+        for i in range(len(self.dialLine)):
+            dialLine += str(self.dialLine[i])
+            if i%2==0:
+                dialLine += " "
+        self.setDisplayLine(0, dialLine, False)
     
     def setStatusLine(self, index, string):
         self.statusLine[index] = string
@@ -76,7 +95,7 @@ class MidiController():
             status += str(self.statusLine[i]) + " | "
         self.setDisplayLine(3, status)
     
-    def setDisplayLine(self, line, string):
+    def setDisplayLine(self, line, string, pad=True):
         print line, string
     
     def clearDisplayLine(self, line):
@@ -99,18 +118,10 @@ class MidiController():
                 if msg.type == 'control_change':
                     if msg.control is self.getSegmentControl():
                         self.updateSegmentsIndex(msg.value)
-                    if msg.control is 20 and msg.value is 127:
-                        self.setMidiMode(0)
-                    if msg.control is 21 and msg.value is 127:
-                        self.setMidiMode(1)
-                    if msg.control is 22 and msg.value is 127:
-                        self.setMidiMode(2)
-                    if msg.control is 102 and msg.value is 127:
-                        self.setNetMode(0)
-                    if msg.control is 103 and msg.value is 127:
-                        self.setNetMode(1)
-                    if msg.control is 104 and msg.value is 127:
-                        self.setNetMode(2)
+                    if 20 <= msg.control and msg.control <= 23 and msg.value is 127:
+                        self.setMidiMode(msg.control % 20)
+                    if 102 <= msg.control and msg.control <= 105 and msg.value is 127:
+                        self.setNetMode(msg.control % 102)
                     if msg.control is 86 and msg.value is 127:
                         self.toggleNetListening()
                     if msg.control is 85 and msg.value is 127:
@@ -119,13 +130,12 @@ class MidiController():
                         self.rnn.resetTrainingData()
                     if msg.control is 14:
                         self.switchLoop(msg.value)
-                    #self.player.getCurrentPattern().setImprecision(msg.value)
+                    if 71 <= msg.control and msg.control <= 73:
+                        self.updatePatternParameter(msg.control%71, msg.value)
                     pass
                 if self.midiMode is 0 and msg.type is 'polytouch':
                     self.setParameterFromMidi(msg.note, msg.value)
-                elif self.midiMode is 1 and (msg.type is 'note_on' or msg.type is 'note_off'):
-                    self.setParameterFromMidi(msg.note, msg.velocity)
-                elif self.midiMode is 2 and (msg.type is 'note_on' or msg.type is 'note_off'):
+                elif 1 <= self.midiMode and self.midiMode <= 3 and (msg.type is 'note_on' or msg.type is 'note_off'):
                     self.setParameterFromMidi(msg.note, msg.velocity)
         except IOError as e:
             print e
@@ -172,6 +182,11 @@ class PushMidi(MidiController):
             value -= 128
         self.player.switchLoop(value)
     
+    def updatePatternParameter(self, index, value):
+        if value > 64:
+            value -= 128
+        self.player.updatePatternParameter(index, value)
+    
     def reset(self):
         for i in range(36,100):
             self.setPadLight(i, 0)
@@ -181,7 +196,7 @@ class PushMidi(MidiController):
         self.setButtonLight(86, 0)
         self.setButtonLight(87, 1)
     
-    def setDisplayLine(self, line, string):
+    def setDisplayLine(self, line, string, centered=True):
         ascii = [ord(c) for c in string]
         
         #pad ascii array with spaces
@@ -191,7 +206,8 @@ class PushMidi(MidiController):
                 ascii.append(32)
             else:
                 ascii.insert(0, 32)
-            back = not back
+            if centered:
+                back = not back
         
         #prepare and send message
         data = [71,127,21,24+line,0,69,0]

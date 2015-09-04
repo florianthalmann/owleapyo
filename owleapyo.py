@@ -1,4 +1,4 @@
-import os, sys, inspect, thread, time, numpy
+import os, sys, inspect, thread, time, math, numpy
 from threading import Thread
 from random import randint
 
@@ -225,16 +225,33 @@ class Loop():
     def __init__(self, objects, duration, division, onsets):
         finegrainedness = 100
         self.objects = objects
-        beatDuration = float(duration)/division/finegrainedness
-        onsets = self.getOnsets(onsets, division)
-        onsets = (finegrainedness*numpy.array(onsets)).tolist()
-        self.seq = Seq(time=beatDuration, seq=onsets, poly=1)
-        print onsets
+        self.beatDuration = float(duration)/division/finegrainedness
+        self.createOnsets(onsets, division, finegrainedness)
+        self.createImprecisionDirections(finegrainedness)
+        self.seq = Seq(time=self.beatDuration, seq=self.onsets, poly=1)
+        #print onsets
+        self.sparseness = 0
         self.index = 0
     
-    def getOnsets(self, onsetCount, total):
+    def createOnsets(self, onsetCount, total, finegrainedness):
         dividers = sorted(random.sample(xrange(1, total), onsetCount - 1))
-        return [a - b for a, b in zip(dividers + [total], [0] + dividers)]
+        self.onsets = [a - b for a, b in zip(dividers + [total], [0] + dividers)]
+        self.onsets = (finegrainedness*numpy.array(self.onsets)).tolist()
+    
+    def createImprecisionDirections(self, finegrainedness):
+        self.imprecisionDirections = [ random.uniform(-1,1) for o in self.onsets ]
+    
+    def getOnsets(self):
+        return self.onsets
+    
+    def setImprecision(self, imprecision):
+        newOnsets = []
+        for i in range(len(self.onsets)):
+            newOnsets.append(self.onsets[i]+(imprecision*self.imprecisionDirections[i]))
+        self.seq.setSeq(newOnsets)
+    
+    def setTempo(self, tempoIncrease): #in percent
+        self.seq.setTime(self.beatDuration/math.pow(2, 0.01*tempoIncrease))
     
     def getObjectCount(self):
         return len(self.objects)
@@ -246,7 +263,9 @@ class Loop():
             x.stopAndClean()
     
     def playNextObject(self):
-        self.objects[self.index].play()
+        #only play some if sparse..
+        if random.uniform(0,100) > self.sparseness:
+            self.objects[self.index].play()
         self.index = (self.index+1) % len(self.objects)
     
     def play(self):
@@ -257,6 +276,7 @@ class Loop():
         self.seq.stop()
         for x in self.objects:
             x.stopAndClean()
+            del x
 
 class RhythmPattern():
     
@@ -267,6 +287,9 @@ class RhythmPattern():
         self.frequencyRatio = 1
         self.filenames = ["miroglio/808 Bass A-1.wav", "miroglio/garden3.wav"]
         self.loops = []
+        self.imprecision = 0
+        self.sparseness = 0
+        self.tempo = 0
         tempoFactor = ((randint(1,5)-3)/10)+1 #0.8,0.9,1,1.1,1.2
         duration = randint(2,4)
         division = 8*duration
@@ -292,10 +315,26 @@ class RhythmPattern():
             f = min(x, 1)
             self.loops[x].setObjects(self.createNewObjects(self.filenames[f], self.loops[x].getObjectCount()))
     
-    def setImprecision(self):
-        for x in self.loops:
-            currentOnsets = x.getOnsets()
-            currentOnsets = [ x+randint(-5,5) for x in currentOnsets ]
+    def updateImprecision(self, delta):
+        newValue = self.imprecision + delta
+        if newValue >= 0:
+            self.imprecision = newValue
+            for loop in self.loops:
+                loop.setImprecision(newValue)
+    
+    def updateSparseness(self, delta):
+        newValue = self.sparseness + delta
+        if newValue >= 0 and newValue <= 100:
+            self.sparseness = newValue
+            for loop in self.loops:
+                loop.sparseness = newValue
+    
+    def updateTempo(self, delta):
+        newValue = self.tempo + delta
+        if newValue >= -100 and newValue <= 100:
+            self.tempo = newValue
+            for loop in self.loops:
+                loop.setTempo(newValue)
     
     def play(self):
         for loop in self.loops:
@@ -319,6 +358,7 @@ class Player():
         self.loops = {}
         self.currentLoop = 0
         self.playingLoop = None
+        self.updateDialInfo()
         self.currentSegmentsIndex = 0
         self.setFile("miroglio/garden3")
         self.mix = Mixer(outs=2, chnls=2, time=.025)
@@ -340,6 +380,17 @@ class Player():
             self.currentSegmentsIndex = value
             self.deleteAllObjects()
             self.updateInfo()
+    
+    def updateDialInfo(self):
+        if self.currentPattern is not None:
+            self.controller.setDialStatus(0, "imp " + str(self.patterns[self.currentPattern].imprecision))
+            self.controller.setDialStatus(1, "spa " + str(self.patterns[self.currentPattern].sparseness))
+            self.controller.setDialStatus(2, "tmp " + str(self.patterns[self.currentPattern].tempo))
+        else:
+            self.controller.setDialStatus(0, "imp 0")
+            self.controller.setDialStatus(1, "spa 0")
+            self.controller.setDialStatus(2, "tmp 0")
+        self.controller.setDialStatus(3, "bass 0")
     
     def updateInfo(self):
         info = self.filename + " " + str(self.currentSegmentsIndex) + " " + str(len(self.durations))
@@ -432,10 +483,20 @@ class Player():
         #stop old pattern
         if self.currentPattern != None:
             self.patterns[self.currentPattern].stop()
+            self.controller.setPadLight(self.currentPattern+36, 0)
         self.currentPattern = index
+        self.controller.setPadLight(self.currentPattern+36, 127)
+        self.updateInfo()
+        self.updateDialInfo()
     
-    def getCurrentPattern(self):
-        return self.patterns[self.currentPattern]
+    def updatePatternParameter(self, index, delta):
+        if index is 0:
+            self.patterns[self.currentPattern].updateImprecision(delta)
+        if index is 1:
+            self.patterns[self.currentPattern].updateSparseness(delta)
+        if index is 2:
+            self.patterns[self.currentPattern].updateTempo(delta)
+        self.updateDialInfo()
     
     def stop(self):
         for loop in self.loops:
