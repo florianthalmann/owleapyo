@@ -85,17 +85,25 @@ class OscListener():
 class Audio():
     
     def __init__(self):
-        self.server = Server(buffersize=256).boot()
+        self.server = Server(buffersize=256)
+        devices = pa_get_output_devices()
+        try:
+            duetIndex = devices[0].index('Duet USB')
+            self.server.setOutputDevice(devices[1][duetIndex])
+        except ValueError:
+            pass
+        self.server.boot()
         self.server.start()
     
     def stop(self):
         self.server.stop()
-        
         print "server stopped"
 
 class SoundObject():
     
     def __init__(self, filename, amplitude=1, start=None, end=None, durationRatio=1, disto=None, reverb=None, pan=None):
+        self.start = start
+        self.end = end
         if start is None:
             self.snd = SndTable(filename)
         else:
@@ -113,6 +121,10 @@ class SoundObject():
         self.disto = 0
         self.reverb = reverb
         self.amplitude = amplitude
+    
+    def setDurationRatio(self, durationRatio):
+        duration = durationRatio*(self.end-self.start)
+        self.snd.setStop(self.start+duration)
     
     def play(self):
         signal = self.getSignal() #IMPLEMENT IN INHERITING CLASSES
@@ -172,9 +184,16 @@ class SampleSoundObject(SoundObject):
             self.frequency = frequencyRatio*(1/self.snd.getDur())
         else:
             self.frequency = 1
-        
+    
+    def setFrequency(self, frequencyModifier):
+        self.frequency = math.pow(2, 0.1*frequencyModifier)*(1/self.snd.getDur())
+        if hasattr(self, 'tbl'):
+            self.tbl.setFreq(self.frequency)
+        print self.frequency
+    
     def getSignal(self):
-        return TableRead(table=self.snd, freq=self.frequency, mul=self.amplitude).out()
+        self.tbl = TableRead(table=self.snd, freq=self.frequency, mul=self.amplitude).out()
+        return self.tbl
 
 class LoopSoundObject(SoundObject):
     
@@ -194,6 +213,7 @@ class LoopSoundObject(SoundObject):
     def append(self, filename, start, end):
         duration = 1*(end-start)
         self.snd.append(filename, crossfade=0.1, start=start, stop=start+duration)
+        self.snd.fadeout(0.01)
         self.tbl.setFreq(self.snd.getRate())
         #print self.snd.getSize(), self.snd.getRate()
     
@@ -225,11 +245,12 @@ class Loop():
     def __init__(self, objects, duration, division, onsets):
         finegrainedness = 100
         self.objects = objects
+        self.duration = duration
         self.beatDuration = float(duration)/division/finegrainedness
         self.createOnsets(onsets, division, finegrainedness)
         self.createImprecisionDirections(finegrainedness)
         self.seq = Seq(time=self.beatDuration, seq=self.onsets, poly=1)
-        #print onsets
+        #print self.onsets
         self.sparseness = 0
         self.index = 0
     
@@ -244,14 +265,38 @@ class Loop():
     def getOnsets(self):
         return self.onsets
     
+    def setFrequencyModifier(self, frequencyModifier):
+        for o in self.objects:
+            o.setFrequency(frequencyModifier)
+    
     def setImprecision(self, imprecision):
         newOnsets = []
         for i in range(len(self.onsets)):
             newOnsets.append(self.onsets[i]+(imprecision*self.imprecisionDirections[i]))
         self.seq.setSeq(newOnsets)
     
-    def setTempo(self, tempoIncrease): #in percent
-        self.seq.setTime(self.beatDuration/math.pow(2, 0.01*tempoIncrease))
+    def setDuration(self, newDuration):
+        newOnsets = []
+        i = 0
+        beatsSoFar = 0
+        totalBeats = int(round(1.0*newDuration/self.beatDuration))
+        while beatsSoFar < totalBeats:
+            if len(newOnsets) < len(self.onsets):
+                timeAfterOnset = beatsSoFar+self.onsets[i]
+                if timeAfterOnset < totalBeats:
+                    newOnsets.append(self.onsets[i])
+                    i += 1
+                    beatsSoFar = timeAfterOnset
+                else:
+                    newOnsets.append((totalBeats-beatsSoFar))
+                    beatsSoFar = totalBeats
+            else:
+                newOnsets[-1] += totalBeats-beatsSoFar
+                beatsSoFar = totalBeats
+        self.seq.setSeq(newOnsets)
+    
+    def setTempoModifier(self, tempoModifier): #in percent
+        self.seq.setTime(self.beatDuration/math.pow(2, 0.01*tempoModifier))
     
     def getObjectCount(self):
         return len(self.objects)
@@ -289,14 +334,17 @@ class RhythmPattern():
         self.loops = []
         self.imprecision = 0
         self.sparseness = 0
-        self.tempo = 0
+        self.durationModifier = 1
+        self.createLoops()
+    
+    def createLoops(self):
         tempoFactor = ((randint(1,5)-3)/10)+1 #0.8,0.9,1,1.1,1.2
-        duration = randint(2,4)
-        division = 8*duration
-        self.loops.append(Loop(self.createSimpleObject(self.filenames[0]), duration, division, duration))
+        self.duration = randint(2,4)
+        division = 8*self.duration
+        self.loops.append(Loop(self.createSimpleObject(self.filenames[0]), self.duration, division, self.duration))
         for x in range(0, self.loopCount):
-            onsets = randint(1,2*duration)
-            self.loops.append(Loop(self.createNewObjects(self.filenames[1], onsets), duration, division, onsets))
+            onsets = randint(1,2*self.duration)
+            self.loops.append(Loop(self.createNewObjects(self.filenames[1], onsets), self.duration, division, onsets))
     
     def createNewObjects(self, filename, objectsInSequence):
         objects = []
@@ -329,15 +377,26 @@ class RhythmPattern():
             for loop in self.loops:
                 loop.sparseness = newValue
     
-    def updateTempo(self, delta):
-        newValue = self.tempo + delta
-        if newValue >= -100 and newValue <= 100:
-            self.tempo = newValue
-            for loop in self.loops:
-                loop.setTempo(newValue)
-    
-    def play(self):
+    def updateDuration(self, delta):
+        self.durationModifier += delta
+        newDuration = self.duration*math.pow(2, 0.01*self.durationModifier)
         for loop in self.loops:
+            loop.setDuration(newDuration)
+    
+    def setTempoModifier(self, tempoModifier):
+        for loop in self.loops:
+            loop.setTempoModifier(tempoModifier)
+    
+    def setFrequencyModifier(self, frequencyModifier):
+        for loop in self.loops:
+            loop.setFrequencyModifier(frequencyModifier)
+    
+    def setBassTuning(self, bassTuning):
+        self.loops[0].setFrequencyModifier(bassTuning)
+    
+    def play(self, tempoModifier):
+        for loop in self.loops:
+            loop.setTempoModifier(tempoModifier)
             loop.play()
     
     def stop(self):
@@ -351,6 +410,8 @@ class Player():
         self.audio = Audio()
         self.durationRatio = 1
         self.frequencyRatio = 1
+        self.tempoModifier = 0
+        self.bassTuning = 0
         self.patterns = {}
         self.currentPattern = None
         self.objects = {}
@@ -360,7 +421,7 @@ class Player():
         self.playingLoop = None
         self.updateDialInfo()
         self.currentSegmentsIndex = 0
-        self.setFile("miroglio/garden3")
+        self.setFile("miroglio/garden1")
         self.mix = Mixer(outs=2, chnls=2, time=.025)
         #self.out = self.mix[0]
         self.reverbSend = Freeverb(self.mix[1], size=.8, damp=.2, bal=1, mul=1).out()
@@ -385,12 +446,13 @@ class Player():
         if self.currentPattern is not None:
             self.controller.setDialStatus(0, "imp " + str(self.patterns[self.currentPattern].imprecision))
             self.controller.setDialStatus(1, "spa " + str(self.patterns[self.currentPattern].sparseness))
-            self.controller.setDialStatus(2, "tmp " + str(self.patterns[self.currentPattern].tempo))
+            self.controller.setDialStatus(2, "dur " + str(self.patterns[self.currentPattern].durationModifier))
         else:
             self.controller.setDialStatus(0, "imp 0")
             self.controller.setDialStatus(1, "spa 0")
-            self.controller.setDialStatus(2, "tmp 0")
-        self.controller.setDialStatus(3, "bass 0")
+            self.controller.setDialStatus(2, "dur 0")
+        self.controller.setDialStatus(3, "tmp " + str(self.tempoModifier))
+        self.controller.setDialStatus(4, "bass " + str(self.bassTuning))
     
     def updateInfo(self):
         info = self.filename + " " + str(self.currentSegmentsIndex) + " " + str(len(self.durations))
@@ -479,7 +541,7 @@ class Player():
             self.patterns[self.currentPattern].replaceObjects()
         if index not in self.patterns:
             self.patterns[index] = RhythmPattern(self.durations)
-        self.patterns[index].play()
+        self.patterns[index].play(self.tempoModifier)
         #stop old pattern
         if self.currentPattern != None:
             self.patterns[self.currentPattern].stop()
@@ -490,13 +552,25 @@ class Player():
         self.updateDialInfo()
     
     def updatePatternParameter(self, index, delta):
-        if index is 0:
-            self.patterns[self.currentPattern].updateImprecision(delta)
-        if index is 1:
-            self.patterns[self.currentPattern].updateSparseness(delta)
-        if index is 2:
-            self.patterns[self.currentPattern].updateTempo(delta)
-        self.updateDialInfo()
+        if self.currentPattern is not None:
+            if index is 0:
+                self.patterns[self.currentPattern].updateImprecision(delta)
+            if index is 1:
+                self.patterns[self.currentPattern].updateSparseness(delta)
+            if index is 2:
+                self.patterns[self.currentPattern].updateDuration(delta)
+            if index is 3:
+                self.tempoModifier += delta
+                self.patterns[self.currentPattern].setTempoModifier(self.tempoModifier)
+            if index is 4:
+                self.bassTuning += delta
+                self.patterns[self.currentPattern].setBassTuning(self.bassTuning)
+            self.updateDialInfo()
+    
+    def updateBend(self, value):
+        self.patterns[self.currentPattern].setTempoModifier(self.tempoModifier+value/20)
+        self.patterns[self.currentPattern].setFrequencyModifier(0.001*value)
+        self.controller.setDialStatus(3, "tmp " + str(self.tempoModifier+value/20))
     
     def stop(self):
         for loop in self.loops:
@@ -507,7 +581,7 @@ class Player():
 
 def main():
     
-    controller = PushMidi()
+    controller = MockMidi()
     rnn = LiveDoubleRNN(controller)
     player = Player(controller)
     controller.setNetAndPlayer(rnn, player)

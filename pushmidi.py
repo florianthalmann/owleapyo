@@ -8,13 +8,13 @@ class MidiController():
         mido.set_backend('mido.backends.rtmidi')
         try:
             self.outport = mido.open_output('Ableton Push User Port')
-        except AttributeError:
+        except IOError:
             pass
         self.dialLine = ["","","","","","","",""]
         self.statusLine = {}
         self.modeNames = ["grain", "sample", "loop", "pattern"]
         self.setNetMode(0)
-        self.setMidiMode(0)
+        self.setMidiMode(3)
         self.thread = Thread( target = self.listenToMidi )
         self.thread.start()
         self.currentValues = {}
@@ -114,7 +114,7 @@ class MidiController():
             self.inport = mido.open_input(self.getInputPortName())
             while self.isRunning:
                 msg = self.inport.receive()
-                #print msg
+                print msg
                 if msg.type == 'control_change':
                     if msg.control is self.getSegmentControl():
                         self.updateSegmentsIndex(msg.value)
@@ -130,9 +130,9 @@ class MidiController():
                         self.rnn.resetTrainingData()
                     if msg.control is 14:
                         self.switchLoop(msg.value)
-                    if 71 <= msg.control and msg.control <= 73:
-                        self.updatePatternParameter(msg.control%71, msg.value)
-                    pass
+                    self.updatePatternParameter(msg.control, msg.value)
+                if msg.type is 'pitchwheel':
+                    self.player.updateBend(msg.pitch)
                 if self.midiMode is 0 and msg.type is 'polytouch':
                     self.setParameterFromMidi(msg.note, msg.value)
                 elif 1 <= self.midiMode and self.midiMode <= 3 and (msg.type is 'note_on' or msg.type is 'note_off'):
@@ -147,6 +147,10 @@ class MidiController():
 
 class MockMidi(MidiController):
     
+    def __init__(self):
+        MidiController.__init__(self)
+        self.previousControlValue = 0
+    
     def getInputPortName(self):
         return 'MidiMock OUT'
     
@@ -155,6 +159,11 @@ class MockMidi(MidiController):
     
     def updateSegmentsIndex(self, value):
         self.player.setSegmentsIndex(64*value)
+    
+    def updatePatternParameter(self, control, value):
+        if control == 1:
+            self.player.updatePatternParameter(4, self.previousControlValue-value)
+            self.previousControlValue = value
 
 
 class PushMidi(MidiController):
@@ -182,10 +191,11 @@ class PushMidi(MidiController):
             value -= 128
         self.player.switchLoop(value)
     
-    def updatePatternParameter(self, index, value):
-        if value > 64:
-            value -= 128
-        self.player.updatePatternParameter(index, value)
+    def updatePatternParameter(self, control, value):
+        if 71 <= control and control <= 78:
+            if value > 64:
+                value -= 128
+            self.player.updatePatternParameter(control%71, value)
     
     def reset(self):
         for i in range(36,100):
