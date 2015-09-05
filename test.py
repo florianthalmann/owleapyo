@@ -42,17 +42,17 @@ def testRhythmPattern(audio):
     print "---test rhythm pattern"
     print audio.server.getNumberOfStreams()
     durations = RdfReader().loadDurations("miroglio/garden3_onset.n3", "n3")
-    for i in range(4):
+    for i in range(10):
         r = RhythmPattern(durations)
-        r.play()
-        time.sleep(1)
+        r.play(0)
+        time.sleep(0.1)
         print audio.server.getNumberOfStreams()
         r.replaceObjects()
-        time.sleep(1)
+        time.sleep(0.1)
         print audio.server.getNumberOfStreams()
         r.stop()
     time.sleep(5)
-    print audio.server.getNumberOfStreams()
+    print [x.getStreamObject() for x in audio.server.getStreams()]
 
 def testPlayer():
     player = Player()

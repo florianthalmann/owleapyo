@@ -114,7 +114,7 @@ class MidiController():
             self.inport = mido.open_input(self.getInputPortName())
             while self.isRunning:
                 msg = self.inport.receive()
-                print msg
+                #print msg
                 if msg.type == 'control_change':
                     if msg.control is self.getSegmentControl():
                         self.updateSegmentsIndex(msg.value)
@@ -128,6 +128,8 @@ class MidiController():
                         self.toggleNetPlaying()
                     if msg.control is 87 and msg.value is 127:
                         self.rnn.resetTrainingData()
+                    if msg.control is 118 and msg.value is 127:
+                        self.player.deleteAllObjects()
                     if msg.control is 14:
                         self.switchLoop(msg.value)
                     self.updatePatternParameter(msg.control, msg.value)
@@ -205,6 +207,7 @@ class PushMidi(MidiController):
         self.setButtonLight(85, 0)
         self.setButtonLight(86, 0)
         self.setButtonLight(87, 1)
+        self.setButtonLight(118, 1)
     
     def setDisplayLine(self, line, string, centered=True):
         ascii = [ord(c) for c in string]

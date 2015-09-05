@@ -146,7 +146,6 @@ class SoundObject():
             #if still there, delete..
             if hasattr(self, 'out'):
                 del self.out
-                "DEL!"
 
 class GranularSoundObject(SoundObject):
     
@@ -174,6 +173,7 @@ class GranularSoundObject(SoundObject):
     def stopOut(self):
         SoundObject.stopOut(self)
         if hasattr(self, 'granulator'):
+            self.granulator.stop()
             del self.granulator
 
 class SampleSoundObject(SoundObject):
@@ -189,11 +189,16 @@ class SampleSoundObject(SoundObject):
         self.frequency = math.pow(2, 0.1*frequencyModifier)*(1/self.snd.getDur())
         if hasattr(self, 'tbl'):
             self.tbl.setFreq(self.frequency)
-        print self.frequency
     
     def getSignal(self):
         self.tbl = TableRead(table=self.snd, freq=self.frequency, mul=self.amplitude).out()
         return self.tbl
+    
+    def stopOut(self):
+        SoundObject.stopOut(self)
+        if hasattr(self, 'tbl'):
+            self.tbl.stop()
+            del self.tbl
 
 class LoopSoundObject(SoundObject):
     
@@ -219,6 +224,12 @@ class LoopSoundObject(SoundObject):
     
     def stop(self):
         self.tbl.stop()
+    
+    def stopOut(self):
+        SoundObject.stopOut(self)
+        if hasattr(self, 'tbl'):
+            self.tbl.stop()
+            del self.tbl
 
 class ObjectSpace():
     
@@ -322,6 +333,11 @@ class Loop():
         for x in self.objects:
             x.stopAndClean()
             del x
+    
+    def stopAndClean(self):
+        self.stop()
+        del self.seq
+        del self.trig
 
 class RhythmPattern():
     
@@ -352,7 +368,7 @@ class RhythmPattern():
             randomIndex = randint(0,len(self.durations)-2)
             start = self.durations[randomIndex]
             end = self.durations[randomIndex+1]
-            objects.append(SampleSoundObject(filename, 0.6, self.frequencyRatio, start, end, randint(1,4))) #random.uniform(0,1)))
+            objects.append(SampleSoundObject(filename, 0.4, self.frequencyRatio, start, end, randint(1,4))) #random.uniform(0,1)))
         return objects
     
     def createSimpleObject(self, filename):
@@ -374,6 +390,12 @@ class RhythmPattern():
         newValue = self.sparseness + delta
         if newValue >= 0 and newValue <= 100:
             self.sparseness = newValue
+            for loop in self.loops:
+                loop.sparseness = newValue
+    
+    def modifySparseness(self, sparsenessMod):
+        newValue = self.sparseness + sparsenessMod
+        if newValue >= 0 and newValue <= 100:
             for loop in self.loops:
                 loop.sparseness = newValue
     
@@ -402,6 +424,10 @@ class RhythmPattern():
     def stop(self):
         for loop in self.loops:
             loop.stop()
+    
+    def stopAndClean(self):
+        for loop in self.loops:
+            loop.stopAndClean()
 
 class Player():
     
@@ -412,13 +438,7 @@ class Player():
         self.frequencyRatio = 1
         self.tempoModifier = 0
         self.bassTuning = 0
-        self.patterns = {}
-        self.currentPattern = None
-        self.objects = {}
-        self.granularObjects = {}
-        self.loops = {}
-        self.currentLoop = 0
-        self.playingLoop = None
+        self.resetObjectMaps()
         self.updateDialInfo()
         self.currentSegmentsIndex = 0
         self.setFile("miroglio/garden1")
@@ -426,6 +446,15 @@ class Player():
         #self.out = self.mix[0]
         self.reverbSend = Freeverb(self.mix[1], size=.8, damp=.2, bal=1, mul=1).out()
         #self.reverbSend = Freeverb(signal, size=self.reverb, bal=self.reverb).out()
+    
+    def resetObjectMaps(self):
+        self.patterns = {}
+        self.currentPattern = None
+        self.objects = {}
+        self.granularObjects = {}
+        self.loops = {}
+        self.currentLoop = 0
+        self.playingLoop = None
     
     def setFile(self, filename):
         self.filename = filename + ".wav"
@@ -439,7 +468,7 @@ class Player():
     def setSegmentsIndex(self, value):
         if 0 <= value and value < len(self.durations):
             self.currentSegmentsIndex = value
-            self.deleteAllObjects()
+            self.deleteAllSimpleObjects()
             self.updateInfo()
     
     def updateDialInfo(self):
@@ -510,7 +539,7 @@ class Player():
             start = self.durations[index]
             end = self.durations[index+1]
             if self.currentLoop not in self.loops:
-                self.loops[self.currentLoop] = LoopSoundObject(self.filename, amp, self.frequencyRatio, start, end, reverb=0)
+                self.loops[self.currentLoop] = LoopSoundObject(self.filename, 1, self.frequencyRatio, start, end, reverb=0)
                 self.mix.addInput(index, self.loops[self.currentLoop].play())
                 if self.playingLoop is not None:
                     self.loops[self.playingLoop].stop()
@@ -521,9 +550,26 @@ class Player():
                 self.loops[self.currentLoop].append(self.filename, start, end)
     
     def deleteAllObjects(self):
+        self.deleteAllSimpleObjects()
+        #del loops
+        existingIndices = self.loops.keys()
+        for index in existingIndices:
+            self.deleteObject(self.loops, index)
+        #del patterns
+        existingIndices = self.patterns.keys()
+        for index in existingIndices:
+            self.deleteObject(self.patterns, index)
+        if self.currentPattern is not None:
+            self.controller.setPadLight(self.currentPattern+36, 0)
+        #reset indices
+        self.resetObjectMaps()
+    
+    def deleteAllSimpleObjects(self):
+        #del sample objects
         existingIndices = self.objects.keys()
         for index in existingIndices:
             self.deleteObject(self.objects, index)
+        #del granular objects
         existingIndices = self.granularObjects.keys()
         for index in existingIndices:
             self.deleteObject(self.granularObjects, index)
@@ -568,9 +614,13 @@ class Player():
             self.updateDialInfo()
     
     def updateBend(self, value):
-        self.patterns[self.currentPattern].setTempoModifier(self.tempoModifier+value/20)
-        self.patterns[self.currentPattern].setFrequencyModifier(0.001*value)
-        self.controller.setDialStatus(3, "tmp " + str(self.tempoModifier+value/20))
+        if value <= 0:
+            self.patterns[self.currentPattern].setTempoModifier(self.tempoModifier+value/20)
+            #self.patterns[self.currentPattern].setFrequencyModifier(0.001*value)
+            self.controller.setDialStatus(3, "tmp " + str(self.tempoModifier+value/20))
+        if value >= 0:
+            self.patterns[self.currentPattern].modifySparseness(value/80)
+            self.controller.setDialStatus(1, "spa " + str(self.patterns[self.currentPattern].sparseness+(value/80)))
     
     def stop(self):
         for loop in self.loops:
@@ -581,7 +631,7 @@ class Player():
 
 def main():
     
-    controller = MockMidi()
+    controller = PushMidi()
     rnn = LiveDoubleRNN(controller)
     player = Player(controller)
     controller.setNetAndPlayer(rnn, player)
