@@ -114,31 +114,38 @@ class MidiController():
             self.inport = mido.open_input(self.getInputPortName())
             while self.isRunning:
                 msg = self.inport.receive()
-                #print msg
-                if msg.type == 'control_change':
-                    if msg.control is self.getSegmentControl():
-                        self.updateSegmentsIndex(msg.value)
-                    if 20 <= msg.control and msg.control <= 23 and msg.value is 127:
-                        self.setMidiMode(msg.control % 20)
-                    if 102 <= msg.control and msg.control <= 105 and msg.value is 127:
-                        self.setNetMode(msg.control % 102)
-                    if msg.control is 86 and msg.value is 127:
-                        self.toggleNetListening()
-                    if msg.control is 85 and msg.value is 127:
-                        self.toggleNetPlaying()
-                    if msg.control is 87 and msg.value is 127:
-                        self.rnn.resetTrainingData()
-                    if msg.control is 118 and msg.value is 127:
-                        self.player.deleteAllObjects()
-                    if msg.control is 14:
-                        self.switchLoop(msg.value)
-                    self.updatePatternParameter(msg.control, msg.value)
-                if msg.type is 'pitchwheel':
-                    self.player.updateBend(msg.pitch)
-                if self.midiMode is 0 and msg.type is 'polytouch':
-                    self.setParameterFromMidi(msg.note, msg.value)
-                elif 1 <= self.midiMode and self.midiMode <= 3 and (msg.type is 'note_on' or msg.type is 'note_off'):
-                    self.setParameterFromMidi(msg.note, msg.velocity)
+                print msg
+                if hasattr(self, 'player'):
+                    if msg.type == 'control_change':
+                        if msg.control is self.getSegmentControl():
+                            self.updateSegmentsIndex(msg.value)
+                        if 20 <= msg.control and msg.control <= 23 and msg.value is 127:
+                            self.setMidiMode(msg.control % 20)
+                        if 102 <= msg.control and msg.control <= 105 and msg.value is 127:
+                            self.setNetMode(msg.control % 102)
+                        if msg.control is 86 and msg.value is 127:
+                            self.toggleNetListening()
+                        if msg.control is 85 and msg.value is 127:
+                            self.toggleNetPlaying()
+                        if msg.control is 87 and msg.value is 127:
+                            self.rnn.resetTrainingData()
+                        if msg.control is 118 and msg.value is 127:
+                            self.player.deleteAllObjects()
+                        if msg.control is 119 and msg.value is 127:
+                            self.player.space.removeObjects()
+                        if msg.control is 14:
+                            self.switchLoop(msg.value)
+                        if msg.control is 28 and msg.value is 127:
+                            self.player.recordPattern()
+                        if msg.control is 29 and msg.value is 127:
+                            self.player.stopPatterns()
+                        self.updateParameter(msg.control, msg.value)
+                    if msg.type is 'pitchwheel':
+                        self.player.updateBend(msg.pitch)
+                    if self.midiMode is 0 and msg.type is 'polytouch':
+                        self.setParameterFromMidi(msg.note, msg.value)
+                    elif 1 <= self.midiMode and self.midiMode <= 3 and (msg.type is 'note_on' or msg.type is 'note_off'):
+                        self.setParameterFromMidi(msg.note, msg.velocity)
         except IOError as e:
             print e
     
@@ -162,9 +169,9 @@ class MockMidi(MidiController):
     def updateSegmentsIndex(self, value):
         self.player.setSegmentsIndex(64*value)
     
-    def updatePatternParameter(self, control, value):
+    def updateParameter(self, control, value):
         if control == 1:
-            self.player.updatePatternParameter(4, self.previousControlValue-value)
+            self.player.updateParameter(4, self.previousControlValue-value)
             self.previousControlValue = value
 
 
@@ -193,11 +200,11 @@ class PushMidi(MidiController):
             value -= 128
         self.player.switchLoop(value)
     
-    def updatePatternParameter(self, control, value):
+    def updateParameter(self, control, value):
         if 71 <= control and control <= 78:
             if value > 64:
                 value -= 128
-            self.player.updatePatternParameter(control%71, value)
+            self.player.updateParameter(control%71, value)
     
     def reset(self):
         for i in range(36,100):
@@ -207,7 +214,10 @@ class PushMidi(MidiController):
         self.setButtonLight(85, 0)
         self.setButtonLight(86, 0)
         self.setButtonLight(87, 1)
+        self.setButtonLight(29, 1)
+        self.setButtonLight(29, 1)
         self.setButtonLight(118, 1)
+        self.setButtonLight(119, 1)
     
     def setDisplayLine(self, line, string, centered=True):
         ascii = [ord(c) for c in string]
