@@ -14,6 +14,7 @@ def testPan(audio):
     so2.play()
     time.sleep(1)
     so2.stopAndClean()
+    time.sleep(3)
 
 def testSoundObject(audio):
     print "---test sound object"

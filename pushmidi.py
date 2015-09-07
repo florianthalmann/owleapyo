@@ -14,7 +14,7 @@ class MidiController():
         self.statusLine = {}
         self.modeNames = ["grain", "sample", "loop", "pattern"]
         self.setNetMode(0)
-        self.setMidiMode(3)
+        self.setMidiMode(0)
         self.thread = Thread( target = self.listenToMidi )
         self.thread.start()
         self.currentValues = {}
@@ -22,6 +22,7 @@ class MidiController():
     def setNetAndPlayer(self, rnn, player):
         self.rnn = rnn
         self.player = player
+        self.setSelectedLevel(0)
     
     def setMidiMode(self, index):
         self.midiMode = index
@@ -38,6 +39,14 @@ class MidiController():
         self.setButtonLight(103, index is 1)
         self.setButtonLight(104, index is 2)
         self.setButtonLight(105, index is 3)
+    
+    def setSelectedLevel(self, index):
+        self.setStatusLine(3, "lev: " + str(index))
+        self.setButtonLight(24, index is 0)
+        self.setButtonLight(25, index is 1)
+        self.setButtonLight(26, index is 2)
+        self.setButtonLight(27, index is 3)
+        self.player.setSelectedLevel(index)
     
     def toggleNetListening(self):
         isOn = self.rnn.toggleListening()
@@ -114,13 +123,15 @@ class MidiController():
             self.inport = mido.open_input(self.getInputPortName())
             while self.isRunning:
                 msg = self.inport.receive()
-                print msg
+                #print msg
                 if hasattr(self, 'player'):
                     if msg.type == 'control_change':
                         if msg.control is self.getSegmentControl():
                             self.updateSegmentsIndex(msg.value)
                         if 20 <= msg.control and msg.control <= 23 and msg.value is 127:
                             self.setMidiMode(msg.control % 20)
+                        if 24 <= msg.control and msg.control <= 27 and msg.value is 127:
+                            self.setSelectedLevel(msg.control % 24)
                         if 102 <= msg.control and msg.control <= 105 and msg.value is 127:
                             self.setNetMode(msg.control % 102)
                         if msg.control is 86 and msg.value is 127:
@@ -132,13 +143,17 @@ class MidiController():
                         if msg.control is 118 and msg.value is 127:
                             self.player.deleteAllObjects()
                         if msg.control is 119 and msg.value is 127:
-                            self.player.space.removeObjects()
+                            self.player.deleteCurrentLoop()
                         if msg.control is 14:
                             self.switchLoop(msg.value)
                         if msg.control is 28 and msg.value is 127:
-                            self.player.recordPattern()
+                            self.player.space.removeObjects()
                         if msg.control is 29 and msg.value is 127:
                             self.player.stopPatterns()
+                        if msg.control is 44 and msg.value is 127:
+                            self.player.switchFile(-1)
+                        if msg.control is 45 and msg.value is 127:
+                            self.player.switchFile(1)
                         self.updateParameter(msg.control, msg.value)
                     if msg.type is 'pitchwheel':
                         self.player.updateBend(msg.pitch)
@@ -214,8 +229,10 @@ class PushMidi(MidiController):
         self.setButtonLight(85, 0)
         self.setButtonLight(86, 0)
         self.setButtonLight(87, 1)
+        self.setButtonLight(28, 1)
         self.setButtonLight(29, 1)
-        self.setButtonLight(29, 1)
+        self.setButtonLight(44, 1)
+        self.setButtonLight(45, 1)
         self.setButtonLight(118, 1)
         self.setButtonLight(119, 1)
     

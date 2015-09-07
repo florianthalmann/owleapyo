@@ -1,0 +1,1178 @@
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix mo: <http://purl.org/ontology/mo/> .
+@prefix af: <http://purl.org/ontology/af/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> . 
+@prefix event: <http://purl.org/NET/c4dm/event.owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix tl: <http://purl.org/NET/c4dm/timeline.owl#> .
+@prefix vamp: <http://purl.org/ontology/vamp/> .
+@prefix : <#> .
+
+<file:///Users/flo/Projects/Code/Python/owleapyo/FritzHauserValerieKeller/T6-1.wav> a mo:AudioFile ;
+    mo:encodes :signal_0.
+
+:signal_0 a mo:Signal ;
+    mo:time [
+        a tl:Interval ;
+        tl:onTimeLine :signal_timeline_0
+    ] .
+
+:signal_timeline_0 a tl:Timeline .
+
+
+:transform_1_onsets a vamp:Transform ;
+    vamp:plugin <http://vamp-plugins.org/rdf/plugins/qm-vamp-plugins#qm-onsetdetector> ;
+    vamp:step_size "512"^^xsd:int ; 
+    vamp:block_size "1024"^^xsd:int ; 
+    vamp:sample_rate "44100"^^xsd:float ; 
+    vamp:plugin_version """3""" ; 
+    vamp:parameter_binding [
+        vamp:parameter [ vamp:identifier "dftype" ] ;
+        vamp:value "3"^^xsd:float ;
+    ] ;
+    vamp:parameter_binding [
+        vamp:parameter [ vamp:identifier "sensitivity" ] ;
+        vamp:value "50"^^xsd:float ;
+    ] ;
+    vamp:parameter_binding [
+        vamp:parameter [ vamp:identifier "whiten" ] ;
+        vamp:value "0"^^xsd:float ;
+    ] ;
+    vamp:output <http://vamp-plugins.org/rdf/plugins/qm-vamp-plugins#qm-onsetdetector_output_onsets> .
+
+:event_2 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT0.754648526S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_3 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT1.799546485S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_4 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT2.786394557S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_5 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT3.842902494S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_6 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT4.156371882S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_7 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT4.725260770S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_8 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT4.829750566S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_9 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT5.328979591S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_10 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT5.816598639S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_11 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT5.874648526S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_12 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT6.710566893S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_13 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT6.815056689S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_14 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT7.291065759S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_15 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT7.778684807S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_16 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT7.952834467S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_17 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT8.626213151S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_18 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT8.719092970S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_19 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT8.788752834S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_20 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT9.148662131S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_21 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT9.334421768S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_22 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT9.671111111S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_23 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT9.775600907S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_24 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT10.472199546S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_25 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT10.634739229S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_26 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT10.983038548S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_27 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT11.075918367S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_28 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT11.505487528S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_29 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT11.598367346S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_30 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT11.702857142S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_31 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT12.294965986S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_32 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT12.561995464S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_33 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT12.666485260S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_34 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT12.817414965S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_35 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT13.096054421S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_36 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT13.386303854S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_37 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT13.688163265S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_38 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT13.781043083S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_39 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT14.001632653S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_40 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT14.268662131S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_41 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT14.535691609S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_42 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT14.802721088S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_43 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT15.046530612S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_44 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT15.301950113S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_45 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT15.603809523S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_46 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT15.685079365S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_47 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT15.847619047S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_48 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT16.149478458S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_49 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT16.404897959S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_50 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT16.509387755S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_51 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT16.671927437S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_52 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT16.904126984S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_53 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT17.008616780S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_54 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT17.182766439S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_55 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT17.287256235S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_56 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT17.461405895S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_57 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT17.554285714S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_58 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT17.740045351S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_59 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT18.018684807S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_60 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT18.343764172S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_61 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT18.738503401S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_62 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT18.854603174S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_63 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT19.110022675S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_64 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT19.365442176S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_65 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT19.458321995S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_66 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT19.620861678S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_67 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT19.713741496S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_68 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT19.969160997S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_69 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT20.062040816S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_70 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT20.178140589S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_71 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT20.445170068S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_72 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT20.526439909S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_73 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT20.967619047S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_74 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT21.780317460S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_75 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT21.884807256S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_76 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT22.105396825S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_77 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT22.314376417S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_78 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT22.418866213S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_79 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT22.581405895S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_80 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT22.836825396S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_81 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT22.964535147S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_82 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT23.661133786S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_83 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT23.754013605S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_84 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT24.171972789S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_85 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT24.740861678S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_86 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT25.182040816S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_87 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT25.530340136S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_88 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT25.576780045S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_89 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT25.994739229S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_90 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT26.087619047S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_91 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT26.528798185S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_92 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT26.749387755S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_93 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT27.271836734S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_94 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT27.399546485S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_95 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT27.515646258S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_96 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT27.620136054S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_97 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT27.771065759S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_98 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT27.887165532S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_99 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT28.038095238S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_100 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT28.281904761S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_101 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT28.386394557S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_102 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT28.525714285S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_103 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT28.618594104S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_104 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT28.804353741S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_105 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT28.897233560S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_106 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT29.106213151S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_107 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT29.361632653S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_108 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT29.454512471S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_109 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT29.593832199S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_110 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT29.872471655S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_111 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT30.116281179S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_112 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT30.394920634S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_113 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT30.754829931S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_114 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT30.952199546S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_115 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT31.103129251S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_116 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT31.207619047S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_117 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT31.474648526S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_118 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT31.683628117S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_119 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT31.939047619S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_120 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT32.031927437S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_121 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT32.368616780S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_122 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT32.449886621S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_123 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT32.833015873S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_124 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT33.100045351S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_125 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT33.216145124S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_126 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT33.332244897S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_127 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT33.634104308S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_128 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT33.750204081S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_129 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT33.889523809S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_130 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT34.133333333S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_131 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT34.226213151S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_132 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT34.377142857S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_133 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT34.481632653S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_134 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT34.690612244S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_135 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT35.155011337S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_136 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT35.793560090S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_137 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT35.886439909S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_138 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT36.211519274S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_139 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT36.942947845S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_140 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT37.035827664S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_141 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT37.209977324S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_142 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT38.069115646S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_143 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT38.161995464S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_144 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT38.243265306S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_145 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT39.044353741S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_146 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT39.230113378S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_147 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT40.379501133S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_148 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT41.494058956S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_149 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT41.586938775S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_150 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT42.597006802S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_151 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT42.771156462S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_152 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT44.884172335S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_153 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT44.953832199S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_154 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT45.963900226S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_155 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT46.056780045S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_156 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT47.240997732S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_157 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT48.309115646S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_158 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT48.413605442S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_159 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT49.295963718S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_160 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT49.435283446S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_161 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT50.364081632S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_162 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT50.549841269S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .
+:event_163 a <http://purl.org/ontology/af/Onset> ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT51.722448979S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onsets .

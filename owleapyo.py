@@ -60,7 +60,7 @@ class OscListener():
     
     def __init__(self, space):
         self.space = space
-        address = '10.19.87.212', 57120
+        address = '192.168.43.6', 57120
         self.server = OSC.OSCServer(address)
         #self.server.addMsgHandler("default", self.handleDefault)
         self.server.addMsgHandler("/create", self.handleCreate)
@@ -92,13 +92,14 @@ class OscListener():
 class Audio():
     
     def __init__(self):
-        self.server = Server(buffersize=512)
+        self.server = Server(buffersize=1024)
         devices = pa_get_output_devices()
         try:
             duetIndex = devices[0].index('Duet USB')
             self.server.setOutputDevice(devices[1][duetIndex])
         except ValueError:
             pass
+        self.server.setAmp(0.2)
         self.server.boot()
         self.server.start()
     
@@ -116,6 +117,7 @@ class SoundObject():
         self.start = start
         self.end = end
         if start is None:
+            self.durationRatio = durationRatio
             self.snd = SndTable(filename)
             self.snd.fadein(0.01)
             self.snd.fadeout(0.01)
@@ -126,13 +128,14 @@ class SoundObject():
         if reverb is None:
             reverb = random.uniform(0.3,1)
         if disto is None:
-            disto = random.uniform(0,1)
+            disto = random.uniform(0,.3)
         self.pan = pan
-        self.disto = 0
+        self.disto = disto
         self.reverb = reverb
         self.amplitude = amplitude
     
     def initTable(self, durationRatio):
+        self.durationRatio = durationRatio
         duration = durationRatio*(self.end-self.start)
         newTable = SndTable(self.filename, start=self.start, stop=self.start+duration)
         newTable.fadein(0.01)
@@ -158,10 +161,11 @@ class SoundObject():
     
     def stopOut(self):
         if hasattr(self, 'out'):
+            #self.ampRamp = SigTo(value=self.amplitude, time=0.02)
             if hasattr(self, 'f'):
                 self.f.stop()
-            self.out.stop()
             time.sleep(1)
+            self.out.stop()
             ##bad design but sounds much better if done here in thread
             if hasattr(self, 'panner'):
                 self.panner.stop()
@@ -189,21 +193,23 @@ class SoundObject():
 
 class GranularSoundObject(SoundObject):
     
-    def __init__(self, filename, amplitude=1, start=None, end=None, durationRatio=1, disto=None, reverb=None, pan=None):
+    def __init__(self, filename, amplitude=0, start=None, end=None, durationRatio=1, disto=None, reverb=None, pan=None):
         SoundObject.__init__(self, filename, amplitude, start, end, durationRatio, 0, 0.2, pan)
         self.position = 0
     
     def getSignal(self):
-        self.posRamp = SigTo(value=0, time=0.02)
+        #self.posRamp = SigTo(value=0, time=0.02)
         self.ampRamp = SigTo(value=self.amplitude, time=0.02)
-        self.granulator = Granulator(self.snd, HannTable(), [1, 1.001], self.posRamp, grains=randint(10,20), dur=Noise(.001, .1), basedur=0.1, mul=self.ampRamp)
+        self.granulator = Granulator(self.snd, HannTable(), [1, 1.001], grains=randint(10,20), dur=Noise(.001, .1), basedur=0.1, mul=self.ampRamp)
         return self.granulator.out()
     
     def update(self, position, amplitude, pan=None, duration=None, pitch=None):
         self.position = position
         if hasattr(self, 'granulator'):
-            self.posRamp.setValue(position)
-            #self.granulator.setPos(position*self.snd.getSize()[0])
+            #self.posRamp.setValue(position)
+            self.granulator.setPos(position*self.snd.getSize()[0])
+            if hasattr(self, 'spheresAmp'):
+                amplitude *= spheresAmp
             self.ampRamp.setValue(amplitude)
             if pan != None:
                 self.panner.setPan(pan)
@@ -211,6 +217,11 @@ class GranularSoundObject(SoundObject):
                 self.granulator.setDur(duration*0.3)
             if pitch != None:
                 self.granulator.setPitch(pitch)
+    
+    def setAmp(self, value):
+        ampValue = self.ampRamp.value/self.amplitude
+        self.amplitude = value
+        self.ampRamp.setValue(self.amplitude*ampValue)
     
     def getPosition(self):
         return self.position
@@ -238,7 +249,7 @@ class SampleSoundObject(SoundObject):
     
     def getSignal(self):
         frequency = self.frequencyRatio*(1/self.snd.getDur())
-        self.f = Fader(fadein=0.01, fadeout=1, dur=0, mul=self.amplitude)
+        self.f = Fader(fadein=0.01, fadeout=0.1, dur=0, mul=self.amplitude)
         self.tbl = TableRead(table=self.snd, freq=frequency, mul=self.f).out()
         self.f.play()
         return self.tbl
@@ -279,15 +290,18 @@ class LoopSoundObject(SoundObject):
 class ObjectSpace():
     
     def __init__(self, filename, durations):
+        self.setFile(filename, durations)
+        self.objects = {}
+    
+    def setFile(self, filename, durations):
         self.filename = filename
         self.durations = durations
-        self.objects = {}
     
     def addObject(self, index):
         randomIndex = randint(0,len(self.durations)-2)
         start = self.durations[randomIndex]
         end = self.durations[randomIndex+1]
-        self.objects[index] = GranularSoundObject(self.filename, 0.1, start, end)
+        self.objects[index] = GranularSoundObject(self.filename, 0.15, start, end)
         self.objects[index].play()
     
     def updateObject(self, index, pan, position, amplitude, duration, pitch):
@@ -311,6 +325,7 @@ class Loop():
     def __init__(self, objects, duration=1, division=8, onsets=None, manual=False):
         finegrainedness = 100
         self.objects = objects
+        self.playingObjects = {}
         self.duration = duration
         if not manual:
             self.beatDuration = float(duration)/division/finegrainedness
@@ -391,7 +406,11 @@ class Loop():
     def playNextObject(self):
         #only play some if sparse..
         if random.uniform(0,100) > self.sparseness:
-            self.objects[self.index].play()
+            if self.index in self.playingObjects:
+                self.playingObjects[self.index].stopAndClean()
+            o = self.objects[self.index]
+            self.playingObjects[self.index] = SampleSoundObject(o.filename, 0.2, o.frequencyRatio, o.start, o.end, o.durationRatio)
+            self.playingObjects[self.index].play()
         self.index = (self.index+1) % len(self.objects)
     
     def play(self):
@@ -442,7 +461,9 @@ class RhythmPattern():
             if index not in self.loops:
                 if index == 0:
                     self.loops[0] = Loop(self.createSimpleObject(self.bassFilename), self.duration, division, self.duration)
+                    
                 
+                    
     
     def finalize(self):
         pass
@@ -550,17 +571,21 @@ class Player():
         self.frequencyRatio = 1
         self.patternDurationModifier = 0
         self.tempoModifier = 0
+        self.selectedLevel = 0
+        self.levels = [1, 1, 1, 1]
         self.resetObjectMaps()
         self.updateDialInfo()
+        self.fileIndex = 0
         self.currentSegmentsIndex = 0
+        self.filenames = []
+        self.durations = []
         self.bassFilename = "miroglio/808 Bass A-1.wav"
-        self.setFile("miroglio/garden1")
+        self.setFiles(["miroglio/garden1", "miroglio/garden3", "FritzHauserValerieKeller/T3", "FritzHauserValerieKeller/T2-1", "FritzHauserValerieKeller/T6-1", "FritzHauserValerieKeller/T6-2"])
         self.mix = Mixer(outs=2, chnls=2, time=.025)
-        #c = Clip(self.mix[0], min=0.5, max=2, mul=.4).mix(2).out()
+        #self.clip = Clip(self.mix[0], min=0.5, max=1, mul=.4).mix(2).out()
         #self.out = self.mix[0]
         self.reverbSend = Freeverb(self.mix[1], size=.8, damp=.2, bal=1, mul=1).out()
         #self.reverbSend = Freeverb(signal, size=self.reverb, bal=self.reverb).out()
-        #self.oscListener = OscListener(self.space)
     
     def resetObjectMaps(self):
         self.patterns = {}
@@ -571,20 +596,32 @@ class Player():
         self.currentLoop = 0
         self.playingLoop = None
     
-    def setFile(self, filename):
-        self.filename = filename + ".wav"
-        self.durations = RdfReader().loadDurations(filename + "_onset.n3", "n3")
-        self.space = ObjectSpace(self.filename, self.durations)
-        self.deleteAllObjects()
-        self.updateInfo()
+    def setFiles(self, filenames):
+        for f in filenames:
+            self.filenames.append(f + ".wav")
+            self.durations.append(RdfReader().loadDurations(f + "_onset.n3", "n3"))
+        self.switchFile(0)
+    
+    def switchFile(self, delta):
+        newIndex = self.fileIndex + delta
+        if newIndex in range(len(self.filenames)):
+            self.fileIndex = newIndex
+            if hasattr(self, 'space'):
+                self.space.setFile(self.filenames[newIndex], self.durations[newIndex])
+            else:
+                self.space = ObjectSpace(self.filenames[newIndex], self.durations[newIndex])
+                self.oscListener = OscListener(self.space)
+            self.currentSegmentsIndex = 0
+            self.deleteAllSampleObjects()
+            self.updateInfo()
     
     def changeSegmentsIndex(self, value):
         self.setSegmentsIndex(self.currentSegmentsIndex + value)
     
     def setSegmentsIndex(self, value):
-        if 0 <= value and value < len(self.durations):
+        if 0 <= value and value < len(self.durations[self.fileIndex]):
             self.currentSegmentsIndex = value
-            self.deleteAllSimpleObjects()
+            self.deleteAllSampleObjects()
             self.updateInfo()
     
     def updateDialInfo(self):
@@ -599,57 +636,58 @@ class Player():
         self.controller.setDialStatus(4, "bass " + str(self.bassTuningRatio))
         self.controller.setDialStatus(5, "frq " + str(self.frequencyRatio))
         self.controller.setDialStatus(6, "len " + str(self.durationRatio))
+        self.controller.setDialStatus(7, "lev " + str(self.levels[self.selectedLevel]))
     
     def updateInfo(self):
-        info = self.filename + " " + str(self.currentSegmentsIndex) + " " + str(len(self.durations))
+        info = self.filenames[self.fileIndex] + " " + str(self.currentSegmentsIndex) + " " + str(len(self.durations[self.fileIndex]))
         info += "   (objects alive: " + str(self.audio.server.getNumberOfStreams()) + ")"
         self.controller.setDisplayLine(1, info)
     
-    def playSound(self, index, velocity):
-        if index > 0:
-            index = self.currentSegmentsIndex + index
+    def playSound(self, padIndex, velocity):
+        sampleIndex = self.currentSegmentsIndex + padIndex
         amp = 0.99*velocity/127
-        if index < len(self.durations)-1:
-            if index in self.objects:
-                self.deleteObject(self.objects, index)
+        if sampleIndex < len(self.durations[self.fileIndex])-1:
+            if padIndex in self.objects:
+                self.deleteObject(self.objects, padIndex)
             if velocity > 0:
-                if index == 0:
-                    newObject = SampleSoundObject(self.bassFilename, 0.7*amp, self.bassTuningRatio, 0, 2, pan=0.5, disto=0, reverb=0)
-                    self.mix.addInput(index, newObject.play())
-                    self.mix.setAmp(index, 1, newObject.reverb*10)
-                    self.objects[index] = newObject
+                if padIndex == 0:
+                    newObject = SampleSoundObject(self.bassFilename, 0.8*amp, self.bassTuningRatio, 0, 2, pan=0.5, disto=0, reverb=0)
+                    self.mix.addInput(padIndex, newObject.play())
+                    self.mix.setAmp(padIndex, 0, 1)
+                    self.mix.setAmp(padIndex, 1, newObject.reverb)
+                    self.objects[padIndex] = newObject
                 else:
-                    start = self.durations[index]
-                    end = self.durations[index+1]
-                    newObject = SampleSoundObject(self.filename, amp, self.frequencyRatio, start, end, self.durationRatio)
-                    self.mix.addInput(index, newObject.play())
-                    self.mix.setAmp(index, 1, newObject.reverb*10)
-                    self.objects[index] = newObject
+                    start = self.durations[self.fileIndex][sampleIndex]
+                    end = self.durations[self.fileIndex][sampleIndex+1]
+                    newObject = SampleSoundObject(self.filenames[self.fileIndex], amp, self.frequencyRatio, start, end, self.durationRatio)
+                    self.mix.addInput(padIndex, newObject.play())
+                    self.mix.setAmp(padIndex, 0, 1)
+                    self.mix.setAmp(padIndex, 1, newObject.reverb)
+                    self.objects[padIndex] = newObject
     
-    def playOrModifyGranularObject(self, index, amp):
-        if index > 0:
-            index = self.currentSegmentsIndex + index
-        if index < len(self.durations)-1:
-            amp = 0.99*amp/127
-            if index in self.granularObjects and self.granularObjects[index].isPlaying():
-                position = (self.granularObjects[index].getPosition()+0.002) % 1
-                self.granularObjects[index].update(position, amp)
+    def playOrModifyGranularObject(self, padIndex, amp):
+        sampleIndex = self.currentSegmentsIndex + padIndex
+        if sampleIndex < len(self.durations[self.fileIndex])-1:
+            amp = 0.6*amp/127
+            if padIndex in self.granularObjects and self.granularObjects[padIndex].isPlaying():
+                position = (self.granularObjects[padIndex].getPosition()+0.002) % 1
+                self.granularObjects[padIndex].update(position, amp)
                 if amp == 0:
-                    self.deleteObject(self.granularObjects, index)
-            elif index == 0:
-                self.granularObjects[index] = GranularSoundObject(self.bassFilename, amp, pan=0.5, disto=0, reverb=0)
-                self.granularObjects[index].play()
-                self.mix.addInput(index, self.granularObjects[index].play())
-                self.mix.setAmp(index, 0, 0)
-                self.mix.setAmp(index, 1, self.granularObjects[index].reverb*10)
+                    self.deleteObject(self.granularObjects, padIndex)
+            elif padIndex == 0:
+                self.granularObjects[padIndex] = GranularSoundObject(self.bassFilename, amp, pan=0.5, disto=0, reverb=0)
+                self.granularObjects[padIndex].play()
+                self.mix.addInput(padIndex, self.granularObjects[padIndex].play())
+                self.mix.setAmp(padIndex, 0, 0)
+                self.mix.setAmp(padIndex, 1, self.granularObjects[padIndex].reverb*10)
             else:
-                start = self.durations[index]
-                end = self.durations[index+1]
-                self.granularObjects[index] = GranularSoundObject(self.filename, amp, start, end)
-                self.granularObjects[index].play()
-                self.mix.addInput(index, self.granularObjects[index].play())
-                self.mix.setAmp(index, 0, 0)
-                self.mix.setAmp(index, 1, self.granularObjects[index].reverb*10)
+                start = self.durations[self.fileIndex][sampleIndex]
+                end = self.durations[self.fileIndex][sampleIndex+1]
+                self.granularObjects[padIndex] = GranularSoundObject(self.filenames[self.fileIndex], amp, start, end)
+                self.granularObjects[padIndex].play()
+                self.mix.addInput(padIndex, self.granularObjects[padIndex].play())
+                self.mix.setAmp(padIndex, 0, 0)
+                self.mix.setAmp(padIndex, 1, self.granularObjects[padIndex].reverb*10)
     
     def switchLoop(self, deltaIndex):
         newIndex = self.currentLoop + deltaIndex
@@ -662,31 +700,36 @@ class Player():
             self.currentLoop = newIndex
             self.controller.setStatusLine(0, "loop: " + str(self.currentLoop))
         if newIndex == -1:
-            self.loops[self.currentLoop].stop()
-            self.currentLoop = -1
+            if self.currentLoop in self.loops:
+                self.loops[self.currentLoop].stop()
+                self.currentLoop = -1
+    
+    def deleteCurrentLoop(self):
+        self.loops[self.currentLoop].stop()
+        self.deleteObject(self.loops, self.currentLoop)
     
     def addSoundToLoop(self, index, velocity):
         #MEASURE TIME SINCE LAST ONE AND ADD!!
         #(MAKE SEAMLESS LOOPS STRETCH AND EXACTLY MIRROR RHYTHM!!!!)
         index = self.currentSegmentsIndex + index
-        if index < len(self.durations)-1:
+        if index < len(self.durations[self.fileIndex])-1:
             amp = 0.99*velocity/127
-            start = self.durations[index]
-            end = self.durations[index+1]
+            start = self.durations[self.fileIndex][index]
+            end = self.durations[self.fileIndex][index+1]
             if self.currentLoop not in self.loops:
-                self.loops[self.currentLoop] = LoopSoundObject(self.filename, 1, self.frequencyRatio, start, end, reverb=0)
+                self.loops[self.currentLoop] = LoopSoundObject(self.filenames[self.fileIndex], 1, self.frequencyRatio, start, end, reverb=0)
                 self.mix.addInput(index, self.loops[self.currentLoop].play())
                 if self.playingLoop is not None:
                     self.loops[self.playingLoop].stop()
                 self.playingLoop = self.currentLoop
-                self.mix.setAmp(index, 1, self.loops[self.currentLoop].reverb*10)
+                self.mix.setAmp(index, 1, self.loops[self.currentLoop].reverb)
             else:
                 #INCLUDE DYNAMICS!!!!!
-                self.loops[self.currentLoop].append(self.filename, start, end)
+                self.loops[self.currentLoop].append(self.filenames[self.fileIndex], start, end)
     
     def deleteAllObjects(self):
         self.deleteAllSimpleObjects()
-        self.space.removeObjects()
+        #self.space.removeObjects()
         #del loops
         existingIndices = self.loops.keys()
         for index in existingIndices:
@@ -697,14 +740,17 @@ class Player():
         self.resetObjectMaps()
     
     def deleteAllSimpleObjects(self):
-        #del sample objects
-        existingIndices = self.objects.keys()
-        for index in existingIndices:
-            self.deleteObject(self.objects, index)
+        self.deleteAllSampleObjects()
         #del granular objects
         existingIndices = self.granularObjects.keys()
         for index in existingIndices:
             self.deleteObject(self.granularObjects, index)
+    
+    def deleteAllSampleObjects(self):
+        #del sample objects
+        existingIndices = self.objects.keys()
+        for index in existingIndices:
+            self.deleteObject(self.objects, index)
     
     def deleteObject(self, objects, index):
         objects[index].stopAndClean()
@@ -714,14 +760,14 @@ class Player():
         self.updateInfo()
     
     def recordPattern(self, index):
-        self.userPattern = RhythmPattern(self.bassFilename, self.filename, self.durations, True)
+        self.userPattern = RhythmPattern(self.bassFilename, self.filenames[self.fileIndex], self.durations[self.fileIndex], True)
     
     def switchToPattern(self, index):
         #play new pattern or replace sounds
         if index == self.currentPattern:
             self.patterns[self.currentPattern].replaceObjects()
         if index not in self.patterns:
-            self.patterns[index] = RhythmPattern(self.bassFilename, self.filename, self.durations)
+            self.patterns[index] = RhythmPattern(self.bassFilename, self.filenames[self.fileIndex], self.durations[self.fileIndex])
         self.patterns[index].play(self.tempoModifier, self.durationRatio, self.patternDurationModifier)
         #stop old pattern
         if self.currentPattern != None and self.currentPattern in self.patterns:
@@ -738,6 +784,10 @@ class Player():
             self.deleteObject(self.patterns, index)
         if self.currentPattern is not None:
             self.controller.setPadLight(self.currentPattern+36, 0)
+        self.currentPattern = None
+    
+    def setSelectedLevel(self, index):
+        self.selectedLevel = index
     
     def updateParameter(self, index, delta):
         if index is 0 and self.currentPattern is not None:
@@ -765,9 +815,13 @@ class Player():
             if self.currentPattern is not None:
                 self.patterns[self.currentPattern].setDurationRatio(self.durationRatio)
         if index is 7:
-            self.mix *= math.pow(2, 0.05*delta)
-            if self.currentPattern is not None:
-                self.patterns[self.currentPattern].setDurationRatio(self.durationRatio)
+            self.levels[self.selectedLevel] *= math.pow(2, 0.05*delta)
+            if self.selectedLevel == 0:
+                #self.master.setMul(self.level)
+                self.reverbSend.setMul(self.levels[self.selectedLevel])
+            elif self.selectedLevel == 1:
+                for index in self.granularObjects:
+                    self.granularObjects[index].setAmp(self.levels[self.selectedLevel])
         self.updateDialInfo()
     
     def updateBend(self, value):

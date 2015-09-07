@@ -1,0 +1,439 @@
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix mo: <http://purl.org/ontology/mo/> .
+@prefix af: <http://purl.org/ontology/af/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> . 
+@prefix event: <http://purl.org/NET/c4dm/event.owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix tl: <http://purl.org/NET/c4dm/timeline.owl#> .
+@prefix vamp: <http://purl.org/ontology/vamp/> .
+@prefix : <#> .
+
+<file:///Users/flo/Projects/Code/Python/owleapyo/FritzHauserValerieKeller/T3.wav> a mo:AudioFile ;
+    mo:encodes :signal_0.
+
+:signal_0 a mo:Signal ;
+    mo:time [
+        a tl:Interval ;
+        tl:onTimeLine :signal_timeline_0
+    ] .
+
+:signal_timeline_0 a tl:Timeline .
+
+
+:transform_1_onset a vamp:Transform ;
+    vamp:plugin <http://vamp-plugins.org/rdf/plugins/bbc-vamp-plugins#bbc-rhythm> ;
+    vamp:step_size "256"^^xsd:int ; 
+    vamp:block_size "1024"^^xsd:int ; 
+    vamp:sample_rate "44100"^^xsd:float ; 
+    vamp:plugin_version """1""" ; 
+    vamp:parameter_binding [
+        vamp:parameter [ vamp:identifier "average_window" ] ;
+        vamp:value "200"^^xsd:float ;
+    ] ;
+    vamp:parameter_binding [
+        vamp:parameter [ vamp:identifier "max_bpm" ] ;
+        vamp:value "300"^^xsd:float ;
+    ] ;
+    vamp:parameter_binding [
+        vamp:parameter [ vamp:identifier "min_bpm" ] ;
+        vamp:value "12"^^xsd:float ;
+    ] ;
+    vamp:parameter_binding [
+        vamp:parameter [ vamp:identifier "numBands" ] ;
+        vamp:value "7"^^xsd:float ;
+    ] ;
+    vamp:parameter_binding [
+        vamp:parameter [ vamp:identifier "peak_window" ] ;
+        vamp:value "6"^^xsd:float ;
+    ] ;
+    vamp:parameter_binding [
+        vamp:parameter [ vamp:identifier "threshold" ] ;
+        vamp:value "1"^^xsd:float ;
+    ] ;
+    vamp:output <http://vamp-plugins.org/rdf/plugins/bbc-vamp-plugins#bbc-rhythm_output_onset> .
+
+:event_type_2 rdfs:subClassOf event:Event ;
+    dc:title "Onset" ;
+    dc:format "" ;
+    dc:description "Point of onsets." .
+
+:event_3 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT16.422312925S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_4 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT16.886712018S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_5 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT17.182766439S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_6 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT17.914195011S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_7 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT18.575963718S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_8 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT19.179682539S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_9 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT19.824036281S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_10 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT20.491609977S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_11 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT21.130158730S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_12 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT21.188208616S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_13 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT21.739682539S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_14 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT22.366621315S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_15 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT23.010975056S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_16 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT23.394104308S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_17 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT23.713378684S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_18 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT24.288072562S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_19 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT24.949841269S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_20 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT25.199455782S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_21 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT25.570975056S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_22 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT26.168888888S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_23 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT26.261768707S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_24 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT26.807437641S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_25 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT27.161541950S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_26 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT27.469206349S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_27 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT28.130975056S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_28 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT28.386394557S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_29 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT28.769523809S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_30 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT29.361632653S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_31 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT29.988571428S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_32 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT30.632925170S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_33 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT31.306303854S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_34 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT31.921632653S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_35 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT32.571791383S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_36 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT33.210340136S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_37 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT33.854693877S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_38 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT34.481632653S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_39 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT35.125986394S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_40 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT35.741315192S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_41 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT36.403083900S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_42 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT37.018412698S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_43 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT37.302857142S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_44 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT37.651156462S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_45 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT38.295510204S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_46 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT38.934058956S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_47 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT39.566802721S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_48 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT39.909297052S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_49 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT40.187936507S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_50 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT40.814875283S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_51 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT41.476643990S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_52 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT42.062947845S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_53 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT42.393832199S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_54 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT42.742131519S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_55 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT43.369070294S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
+:event_56 a :event_type_2 ;
+    event:time [ 
+        a tl:Instant ;
+        tl:onTimeLine :signal_timeline_0 ;
+        tl:at "PT44.048253968S"^^xsd:duration ;
+    ] ;
+    vamp:computed_by :transform_1_onset .
